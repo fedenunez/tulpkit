@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tulpkit — a research-backed Claude Code plugin by fedenunez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1f2f4;--paper:#fbfbfa;--ink:#15181d;--ink-mid:#454c57;--ink-dim:#79808c;
+    --line:#dcdee2;--line-2:#c8ccd2;
+    --good:#1c7c54;--good-soft:#e3efe9;--good-deep:#155e40;
+    --warn:#bb4630;--warn-soft:#f3e4df;
+    --struct:#3a3f8f;--struct-soft:#e7e8f4;
+    --serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+    --maxw:960px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 380px at 50% -60px,#e3efe9,transparent),linear-gradient(180deg,#eef0f2,#f1f2f4 360px)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+  .mono{font-family:var(--mono)}
+  a{color:var(--struct);text-decoration:none;border-bottom:1px solid var(--struct-soft)}
+  a:hover{border-bottom-color:var(--struct)}
+
+  .top{position:sticky;top:0;z-index:30;background:rgba(241,242,244,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top .row{display:flex;justify-content:space-between;align-items:center;height:54px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .top b{color:var(--ink);font-weight:600}
+  .top nav{display:flex;gap:16px}
+  .top nav a{border:0}
+  @media(max-width:560px){.top nav a:not(.cta){display:none}}
+  .cta{color:var(--good-deep);font-weight:600}
+
+  /* hero */
+  .hero{padding:74px 0 30px;text-align:center}
+  .badge{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--good-deep);background:var(--good-soft);border:1px solid #c8e0d3;border-radius:30px;padding:6px 14px;margin-bottom:24px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(40px,8vw,84px);line-height:.98;letter-spacing:-.02em;margin:0 0 18px}
+  h1 .dot{color:var(--good)}
+  .tagline{font-size:clamp(17px,2.3vw,22px);color:var(--ink-mid);max-width:46ch;margin:0 auto 14px}
+  .tagline b{color:var(--ink);font-weight:600}
+  .by{font-family:var(--mono);font-size:13px;color:var(--ink-dim);margin-bottom:30px}
+  .by b{color:var(--good-deep)}
+  .install{display:inline-flex;flex-direction:column;gap:0;text-align:left;background:#11151b;color:#e8eaed;border-radius:12px;padding:16px 20px;font-family:var(--mono);font-size:13.5px;line-height:1.9;box-shadow:0 10px 30px rgba(20,30,25,.18)}
+  .install .c{color:#7fd1a8}
+  .install .d{color:#6b7280}
+
+  section{padding:54px 0;border-top:1px solid var(--line)}
+  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--struct);margin:0 0 6px;text-align:center}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(25px,3.6vw,36px);letter-spacing:-.01em;margin:0 0 8px;text-align:center}
+  .sub{color:var(--ink-mid);max-width:62ch;margin:0 auto 32px;text-align:center}
+
+  /* pipeline */
+  .pipe{width:100%;height:auto}
+  .pl path.flow{stroke-dasharray:8 6;stroke-dashoffset:200;animation:dash 2.4s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  .pl .node{opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease}
+  .pl.in .node{opacity:1;transform:none}
+  .pl.in .node:nth-child(2){transition-delay:.05s}.pl.in .node:nth-child(3){transition-delay:.15s}
+  .pl.in .node:nth-child(4){transition-delay:.25s}.pl.in .node:nth-child(5){transition-delay:.35s}
+  .pl.in .node:nth-child(6){transition-delay:.45s}.pl.in .node:nth-child(7){transition-delay:.55s}
+
+  /* commands */
+  .cmds{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.cmds{grid-template-columns:1fr}}
+  .cmd{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .cmd code{font-family:var(--mono);font-size:13px;color:var(--struct);font-weight:600}
+  .cmd p{margin:7px 0 0;font-size:13.5px;color:var(--ink-mid)}
+
+  /* why pillars */
+  .pillars{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.pillars{grid-template-columns:1fr}}
+  .pill{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--good);border-radius:12px;padding:16px 18px}
+  .pill h3{font-family:var(--serif);font-size:18px;margin:0 0 5px;font-weight:600}
+  .pill p{margin:0;font-size:13.5px;color:var(--ink-mid)}
+  .pill a{font-size:12.5px}
+
+  /* guardrails strip */
+  .guards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:720px){.guards{grid-template-columns:1fr 1fr}}
+  .gd{background:var(--warn-soft);border:1px solid #e7c7bd;border-radius:12px;padding:15px 16px}
+  .gd .n{font-family:var(--mono);font-size:11px;color:var(--warn);font-weight:600;margin-bottom:6px}
+  .gd p{margin:0;font-size:13px;color:var(--ink-mid)}
+
+  /* big links */
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.links{grid-template-columns:1fr}}
+  .lk{display:block;border-radius:16px;padding:26px;border:1px solid var(--line);background:var(--paper);transition:transform .2s ease,box-shadow .2s ease}
+  .lk:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(20,30,25,.1)}
+  .lk.ev{background:var(--good-soft);border-color:#c8e0d3}
+  .lk.an{background:var(--struct-soft);border-color:#c9cbe8}
+  .lk .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .lk h3{font-family:var(--serif);font-size:23px;margin:8px 0 6px;font-weight:600;color:var(--ink)}
+  .lk p{margin:0;font-size:14px;color:var(--ink-mid)}
+  .lk .go{font-family:var(--mono);font-size:13px;color:var(--good-deep);margin-top:12px;display:inline-block}
+  .lk.an .go{color:var(--struct)}
+
+  footer{border-top:1px solid var(--line);padding:30px 0 64px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);text-align:center}
+  footer b{color:var(--good-deep)}
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+  .reveal.in{opacity:1;transform:none}
+  :focus-visible{outline:2px solid var(--struct);outline-offset:3px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal,.pl .node{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap row">
+  <span><b>tulpkit</b></span>
+  <nav><a href="#how">how</a><a href="#why">why</a><a href="evidence.html">evidence</a><a class="cta" href="research.html">full analysis →</a></nav>
+</div></header>
+
+<main>
+<div class="wrap">
+
+  <section class="hero reveal" style="border-top:0">
+    <div class="badge">Research‑backed · Claude Code plugin</div>
+    <h1>tulpkit<span class="dot">.</span></h1>
+    <p class="tagline">Run any task as a <b>staged team of Claude agents</b> that can't quietly stop until the work is validated, independently reviewed — by <b>Codex</b> when it's installed — and signed off.</p>
+    <p class="by">by <b>fedenunez</b> — every design decision traced to a study</p>
+    <div class="install">
+      <span><span class="d"># add the marketplace &amp; install</span></span>
+      <span><span class="c">/plugin marketplace add</span> fedenunez/tulpkit</span>
+      <span><span class="c">/plugin install</span> tulpkit@fedenunez</span>
+      <span><span class="d"># then, in any repo:</span></span>
+      <span><span class="c">/tulpkit:make</span> add a CSV export to the reports page</span>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how" class="reveal">
+    <p class="sec-h">How it works</p>
+    <h2>One brief, a small team, a gated finish</h2>
+    <p class="sub">Writes stay single‑threaded — one implementer builds, the others add judgment. The run can't end until the gates clear.</p>
+    <svg class="pl pipe reveal" viewBox="0 0 940 188" role="img" aria-label="Pipeline: assemble brief, research and architecture, build with locked tests, review loop, gated sign-off, then ship and learn.">
+      <defs><marker id="a" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="var(--ink-dim)"/></marker></defs>
+      <path class="flow" d="M150,52 H210 M360,52 H420 M570,52 H630" fill="none" stroke="var(--struct)" stroke-width="2" marker-end="url(#a)"/>
+      <g font-family="IBM Plex Mono" font-size="12" fill="var(--ink)">
+        <g class="node"><rect x="16" y="30" width="134" height="44" rx="10" fill="var(--struct-soft)" stroke="var(--struct)"/><text x="83" y="50" text-anchor="middle">P0 · brief</text><text x="83" y="65" text-anchor="middle" font-size="9.5" fill="var(--struct)">assemble context</text></g>
+        <g class="node"><rect x="212" y="30" width="148" height="44" rx="10" fill="var(--paper)" stroke="var(--line-2)"/><text x="286" y="50" text-anchor="middle">P1 · research</text><text x="286" y="65" text-anchor="middle" font-size="9.5" fill="var(--ink-dim)">+ architecture, cited</text></g>
+        <g class="node"><rect x="422" y="30" width="148" height="44" rx="10" fill="var(--paper)" stroke="var(--line-2)"/><text x="496" y="50" text-anchor="middle">P2 · build</text><text x="496" y="65" text-anchor="middle" font-size="9.5" fill="var(--good-deep)">Claude builds · tester locks 🔒</text></g>
+        <g class="node"><rect x="632" y="30" width="150" height="44" rx="10" fill="var(--warn-soft)" stroke="var(--warn)"/><text x="707" y="50" text-anchor="middle">P4 · review ⟲</text><text x="707" y="65" text-anchor="middle" font-size="9.5" fill="var(--warn)">Codex or a 2nd model</text></g>
+        <g class="node"><rect x="632" y="108" width="150" height="46" rx="10" fill="var(--good-soft)" stroke="var(--good)"/><text x="707" y="128" text-anchor="middle">GATES</text><text x="707" y="144" text-anchor="middle" font-size="9" fill="var(--good-deep)">green · intact · spec · 0 issues</text></g>
+        <g class="node"><rect x="404" y="108" width="186" height="46" rx="10" fill="var(--struct-soft)" stroke="var(--struct)"/><text x="497" y="128" text-anchor="middle">ship + write learnings</text><text x="497" y="144" text-anchor="middle" font-size="9" fill="var(--struct)">memory feeds the next run ↺</text></g>
+        <path d="M707,76 V108" fill="none" stroke="var(--ink-dim)" stroke-width="2" marker-end="url(#a)"/>
+        <path d="M632,131 H592" fill="none" stroke="var(--ink-dim)" stroke-width="2" marker-end="url(#a)"/>
+      </g>
+    </svg>
+    <div class="cmds" style="margin-top:26px">
+      <div class="cmd reveal"><code>/tulpkit:make &lt;text | task&gt;</code><p>Run the full staged orchestration — on free text, or on an existing task (then auto‑moves it inprogress → done).</p></div>
+      <div class="cmd reveal"><code>/tulpkit:add [bug|feature|…] &lt;title&gt;</code><p>File a task into a git‑backed folder system (<span class="mono">tasks/list</span> + <span class="mono">by‑state</span> symlinks).</p></div>
+      <div class="cmd reveal"><code>/tulpkit:list [state]</code><p>Show a state in detail plus counters for every other state.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:remove &lt;slug&gt;</code><p>Delete a task's folder + symlink (recoverable from git).</p></div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why" class="reveal">
+    <p class="sec-h">Why it's built this way</p>
+    <h2>Each choice traces to the evidence</h2>
+    <p class="sub">The foundations are the best‑supported ideas in the field — and they got <em>stronger</em> when re‑checked on current frontier models.</p>
+    <div class="pillars">
+      <div class="pill reveal"><h3>Context first</h3><p>P0 assembles one brief before any fan‑out — the single biggest measured lever. <a href="https://arxiv.org/abs/2512.18470">+18pts →</a></p></div>
+      <div class="pill reveal"><h3>One writer, many minds</h3><p>Single‑threaded writes; extra agents add judgment, not parallel edits. <a href="https://cognition.ai/blog/multi-agents-working">Cognition →</a></p></div>
+      <div class="pill reveal"><h3>Verify outside the model</h3><p>Cite sources, run the code — self‑correction only works with external feedback. <a href="https://arxiv.org/abs/2310.01798">DeepMind →</a></p></div>
+      <div class="pill reveal"><h3>A small team beats a swarm</h3><p>Five roles, medium models — a structured team beats one big solo agent. <a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">SOTA 72.2% →</a></p></div>
+    </div>
+  </section>
+
+  <!-- GUARDRAILS -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--warn)">The honest part</p>
+    <h2>Four guardrails, enforced in code</h2>
+    <p class="sub">The cautions the evidence is clearest about — built in, not hidden.</p>
+    <div class="guards">
+      <div class="gd reveal"><div class="n">01 · integrity</div><p>The tester owns &amp; <b>locks</b> tests; the implementer can't edit them. Tampering is refused.</p></div>
+      <div class="gd reveal"><div class="n">02 · spec gate</div><p>Green ≠ done. Sign‑off needs a <b>spec‑conformance</b> attestation.</p></div>
+      <div class="gd reveal"><div class="n">03 · independence</div><p>Reviewer runs on a <b>different model</b> than the implementer.</p></div>
+      <div class="gd reveal"><div class="n">04 · cross‑vendor</div><p>Claude builds; if <b>Codex</b> is installed, <b>OpenAI</b> reviews — two vendors checking each other.</p></div>
+    </div>
+  </section>
+
+  <!-- CROSS-VENDOR -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--struct)">Two vendors, checking each other</p>
+    <h2>Claude builds. Codex reviews.</h2>
+    <p class="sub">A model flatters its own work, and that bias is strongest <em>within a model family</em>. So the most independent reviewer is a different vendor. tulpkit checks <b>in code</b> whether Codex is installed and logged in — if it is, the review (and optionally the first‑cut tests) run through <b>OpenAI's Codex</b>; if not, it falls back to a different <b>Claude</b> model. Either way, the reviewer is never the author.</p>
+    <svg class="pipe reveal" viewBox="0 0 940 200" role="img" aria-label="Claude implements; codex.ts detects Codex — if available OpenAI's Codex reviews cross-vendor, otherwise a different Claude model reviews; both lead to sign-off.">
+      <defs><marker id="b" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="var(--ink-dim)"/></marker></defs>
+      <g font-family="IBM Plex Mono" font-size="12" fill="var(--ink)">
+        <rect x="16" y="74" width="196" height="56" rx="11" fill="var(--struct-soft)" stroke="var(--struct)"/>
+        <text x="114" y="98" text-anchor="middle" font-weight="600">Claude · implementer</text>
+        <text x="114" y="115" text-anchor="middle" font-size="10" fill="var(--ink-dim)">(sonnet) writes the code</text>
+
+        <path d="M214,102 H262" fill="none" stroke="var(--ink-dim)" stroke-width="2" marker-end="url(#b)"/>
+        <rect x="266" y="72" width="180" height="60" rx="11" fill="var(--paper)" stroke="var(--line-2)"/>
+        <text x="356" y="96" text-anchor="middle" font-weight="600">codex.ts detect</text>
+        <text x="356" y="114" text-anchor="middle" font-size="10" fill="var(--ink-dim)">installed + logged in?</text>
+
+        <path d="M446,90 Q486,90 486,54 H548" fill="none" stroke="var(--good)" stroke-width="2" marker-end="url(#b)"/>
+        <text x="500" y="44" text-anchor="middle" font-size="10" fill="var(--good-deep)">yes</text>
+        <rect x="552" y="28" width="212" height="52" rx="11" fill="var(--good-soft)" stroke="var(--good)"/>
+        <text x="658" y="50" text-anchor="middle" font-weight="600" fill="var(--good-deep)">Codex · OpenAI</text>
+        <text x="658" y="67" text-anchor="middle" font-size="10" fill="var(--good-deep)">cross‑vendor review — most independent</text>
+
+        <path d="M446,114 Q486,114 486,150 H548" fill="none" stroke="var(--struct)" stroke-width="2" marker-end="url(#b)"/>
+        <text x="500" y="168" text-anchor="middle" font-size="10" fill="var(--struct)">no</text>
+        <rect x="552" y="124" width="212" height="52" rx="11" fill="var(--struct-soft)" stroke="var(--struct)"/>
+        <text x="658" y="146" text-anchor="middle" font-weight="600" fill="var(--struct)">Claude · reviewer (opus)</text>
+        <text x="658" y="163" text-anchor="middle" font-size="10" fill="var(--struct)">different model — fallback</text>
+
+        <path d="M764,54 Q828,54 828,92 V96" fill="none" stroke="var(--ink-dim)" stroke-width="2"/>
+        <path d="M764,150 Q828,150 828,112 V108" fill="none" stroke="var(--ink-dim)" stroke-width="2"/>
+        <path d="M828,102 H872" fill="none" stroke="var(--ink-dim)" stroke-width="2" marker-end="url(#b)"/>
+        <rect x="788" y="80" width="44" height="44" rx="8" fill="none"/>
+        <text x="900" y="98" text-anchor="middle" font-size="11" fill="var(--warn)">sign‑</text>
+        <text x="900" y="112" text-anchor="middle" font-size="11" fill="var(--warn)">off</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- LINKS -->
+  <section class="reveal">
+    <p class="sec-h">Read deeper</p>
+    <h2>See the proof</h2>
+    <p class="sub">This plugin documents itself. Every decision above links to a study — and there are two ways in.</p>
+    <div class="links">
+      <a class="lk ev reveal" href="evidence.html">
+        <span class="k">Decision ledger</span>
+        <h3>evidence.html</h3>
+        <p>Every design choice mapped to where it lives in the code and the paper that backs it — including the guardrails.</p>
+        <span class="go">Open the ledger →</span>
+      </a>
+      <a class="lk an reveal" href="research.html">
+        <span class="k">Full analysis</span>
+        <h3>research.html</h3>
+        <p>The adversarial review behind it all — evidence for and against each idea, reweighted for current frontier models.</p>
+        <span class="go">Open the analysis →</span>
+      </a>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer><div class="wrap">tulpkit — a <b>research‑backed</b> Claude Code plugin by <b>fedenunez</b> · install <span class="mono">tulpkit@fedenunez</span> · evidence current to June 2026</div></footer>
+
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  const pl=document.querySelector('.pl');
+  if(pl){const po=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){pl.classList.add('in');po.disconnect();}});},{threshold:.3});po.observe(pl);}
+</script>
+</body>
+</html>

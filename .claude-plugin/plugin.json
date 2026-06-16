@@ -1,0 +1,17 @@
+{
+  "name": "tulpkit",
+  "version": "1.1.0",
+  "description": "Research-backed staged multi-agent delivery (validation-gated, test-integrity, cross-vendor review) + a git-backed folder task system. Every decision is evidence-backed \u2014 see evidence.html.",
+  "author": {
+    "name": "fedenunez",
+    "url": "https://github.com/fedenunez"
+  },
+  "keywords": [
+    "orchestration",
+    "subagents",
+    "review-loop",
+    "tdd",
+    "tasks"
+  ],
+  "homepage": "README.html"
+}

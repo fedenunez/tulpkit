@@ -1,0 +1,18 @@
+{
+  "name": "fedenunez",
+  "owner": {
+    "name": "fedenunez",
+    "url": "https://github.com/fedenunez"
+  },
+  "metadata": {
+    "description": "Research-backed Claude Code plugins by fedenunez \u2014 staged multi-agent delivery with evidence behind every decision."
+  },
+  "plugins": [
+    {
+      "name": "tulpkit",
+      "source": "./",
+      "description": "Research-backed staged orchestration (/tulpkit:make) + git-backed tasks. Decision evidence in evidence.html; full analysis in research.html.",
+      "version": "1.1.0"
+    }
+  ]
+}

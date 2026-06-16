@@ -1,0 +1,19 @@
+{
+  "name": "tulpkit",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Claude Code plugin: staged multi-agent delivery enforced to a validation-gated, auditable sign-off, plus a git-backed folder task system.",
+  "type": "module",
+  "scripts": {
+    "orchestrate": "tsx scripts/orchestrator.ts",
+    "tasks": "tsx scripts/tasks.ts",
+    "status": "tsx scripts/orchestrator.ts status",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx scripts/selftest.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.21",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3"
+  }
+}

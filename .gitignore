@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# Orchestrator run state (generated per-run in consuming repos)
+.claude/orchestrator/
+
+# OS / editor noise
+.DS_Store
+*.log

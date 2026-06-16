@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tulpkit — regrounded for the frontier-model era</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1f2f4; --paper:#fbfbfa; --ink:#15181d; --ink-mid:#454c57; --ink-dim:#79808c;
+    --line:#dcdee2; --line-2:#c8ccd2;
+    --good:#1c7c54; --good-soft:#e3efe9; --good-deep:#155e40;
+    --warn:#bb4630; --warn-soft:#f3e4df;
+    --struct:#3a3f8f; --struct-soft:#e7e8f4;
+    --serif:'Fraunces',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.62;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(180deg,#e9f1ec,#f1f2f4 300px)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+  .mono{font-family:var(--mono)}
+  a{color:var(--struct);text-decoration:none;border-bottom:1px solid var(--struct-soft)}
+  a:hover{border-bottom-color:var(--struct)}
+
+  .top{position:sticky;top:0;z-index:30;background:rgba(241,242,244,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top .row{display:flex;justify-content:space-between;align-items:center;height:52px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .top b{color:var(--ink);font-weight:600}
+  .top .verdict{color:var(--good-deep);font-weight:600}
+  @media(max-width:560px){.top .verdict{display:none}}
+
+  .hero{padding:62px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--good-deep);margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(33px,5.6vw,60px);line-height:1.03;letter-spacing:-.016em;margin:0 0 20px;max-width:17ch}
+  h1 .em{color:var(--good)}
+  .lede{font-size:clamp(16px,2vw,20px);color:var(--ink-mid);max-width:60ch;margin:0 0 28px}
+  .lede b{color:var(--ink);font-weight:600}
+  .stamp{display:inline-flex;align-items:center;gap:16px;border:2px solid var(--good);border-radius:14px;padding:15px 22px;background:var(--paper);box-shadow:6px 6px 0 var(--good-soft)}
+  .stamp .lab{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:4px}
+  .stamp .big{font-family:var(--serif);font-weight:600;font-size:24px;color:var(--good-deep);line-height:1.05}
+  .stamp small{display:block;font-size:12.5px;color:var(--ink-mid);margin-top:6px;max-width:40ch;font-family:var(--sans)}
+
+  /* recency lens callout */
+  .lens{margin:26px 0 0;background:var(--struct-soft);border:1px solid #c9cbe8;border-radius:14px;padding:20px 24px}
+  .lens h3{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--struct);margin:0 0 8px}
+  .lens p{margin:0;color:var(--ink-mid);font-size:14.5px;max-width:74ch}
+  .lens .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:11.5px}
+  .lens .legend span{display:flex;align-items:center;gap:6px}
+  .lens .legend i{width:9px;height:9px;border-radius:2px}
+  .i-up{background:var(--good)} .i-hold{background:var(--struct)} .i-warn{background:var(--warn)}
+
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(23px,3.2vw,32px);letter-spacing:-.01em;margin:0 0 8px}
+  .sub{color:var(--ink-mid);max-width:66ch;margin:0 0 26px}
+  .sub b{color:var(--ink);font-weight:600}
+
+  .scale-wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:28px;align-items:center;padding-top:6px}
+  @media(max-width:780px){.scale-wrap{grid-template-columns:1fr}}
+  .scale-svg{width:100%;height:auto}
+  .beam-line{transform-box:fill-box;transform-origin:center;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+  .pan-l,.pan-r{transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+  .scale-svg.in .beam-line{transform:rotate(9deg)}
+  .scale-svg.in .pan-l{transform:translateY(-20px)}
+  .scale-svg.in .pan-r{transform:translateY(20px)}
+  .scale-note h3{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 8px}
+  .scale-note p{font-size:14px;color:var(--ink-mid);margin:0}
+
+  .pipe{width:100%;height:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:8px}
+
+  /* claim cards */
+  .claim{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px 22px 18px;margin-bottom:16px;position:relative}
+  .claim h3{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 10px;max-width:40ch}
+  .era{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .vint{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-dim);background:#eceef1;border-radius:20px;padding:3px 10px}
+  .rv{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:3px 10px;font-weight:600}
+  .rv-up{background:var(--good-soft);color:var(--good-deep)}
+  .rv-hold{background:var(--struct-soft);color:var(--struct)}
+  .rv-warn{background:var(--warn-soft);color:var(--warn)}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0 14px}
+  @media(max-width:680px){.twocol{grid-template-columns:1fr}}
+  .side{border-radius:10px;padding:12px 13px;font-size:13.5px;line-height:1.5}
+  .side.for{background:var(--good-soft)} .side.against{background:var(--warn-soft)}
+  .side .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  .side.for .l{color:var(--good-deep)} .side.against .l{color:var(--warn)}
+  .side p{margin:0 0 6px;color:var(--ink-mid)} .side a{font-size:12.5px}
+
+  .bal .track{position:relative;height:13px;border-radius:8px;background:#e9eaed;overflow:hidden;display:flex}
+  .bal .ag{background:var(--warn);height:100%;width:0;transition:width 1s ease .15s}
+  .bal .fo{background:var(--good);height:100%;width:0;transition:width 1s ease .15s;margin-left:auto}
+  .bal.in .ag{width:var(--ag)} .bal.in .fo{width:var(--fo)}
+  .bal .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.45}
+  .bal .lg{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-top:5px}
+
+  /* questions */
+  .qa{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:6px 24px}
+  .qa .q{padding:18px 0;border-bottom:1px solid var(--line)}
+  .qa .q:last-child{border-bottom:0}
+  .qa .qh{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline}
+  .qa .qh .a{font-family:var(--mono);font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;background:var(--good-soft);color:var(--good-deep);white-space:nowrap}
+  .qa .qh .a.warn{background:var(--warn-soft);color:var(--warn)}
+  .qa p{margin:0;color:var(--ink-mid);font-size:14.5px}
+  .qa a{font-size:13.5px}
+
+  .wl{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.wl{grid-template-columns:1fr}}
+  .wl .box{border-radius:14px;padding:18px 20px;border:1px solid var(--line)}
+  .wl .win{background:var(--good-soft);border-color:#bcdccd} .wl .lose{background:var(--warn-soft);border-color:#e7c7bd}
+  .wl h4{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px}
+  .wl .win h4{color:var(--good-deep)} .wl .lose h4{color:var(--warn)}
+  .wl ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-mid)} .wl li{margin:6px 0} .wl li b{color:var(--ink)}
+
+  .cond{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px 24px}
+  .cond .item{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
+  .cond .item:last-child{border-bottom:0}
+  .cond .ck{flex:none;width:22px;height:22px;border-radius:6px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px}
+  .ck.y{background:var(--good)} .ck.n{background:var(--warn)}
+  .cond .item span{color:var(--ink-mid);font-size:14px} .cond .item b{color:var(--ink)}
+
+  .srcs{columns:2;column-gap:30px;font-size:13px;padding:0;margin:0}
+  @media(max-width:680px){.srcs{columns:1}}
+  .srcs li{break-inside:avoid;margin-bottom:10px;list-style:none}
+  .srcs .who{font-family:var(--mono);font-size:11px;color:var(--ink-dim);display:block}
+  .srcs .new{color:var(--good-deep);font-weight:600}
+  .disc{font-size:12.5px;color:var(--ink-dim);font-style:italic;margin-top:16px}
+  footer{border-top:1px solid var(--line);padding:24px 0 60px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+  .reveal.in{opacity:1;transform:none}
+  :focus-visible{outline:2px solid var(--struct);outline-offset:3px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}.reveal{opacity:1;transform:none}.beam-line{transform:rotate(9deg)}.pan-l{transform:translateY(-20px)}.pan-r{transform:translateY(20px)}.bal .ag{width:var(--ag)}.bal .fo{width:var(--fo)}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap row">
+    <span><b>tulpkit</b> · evidence review, regrounded</span>
+    <span class="verdict">VERDICT — APPROVE · FRONTIER-GROUNDED · 2 GUARDRAILS</span>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section class="hero reveal" style="border-top:0">
+    <div class="eyebrow">Reweighted for the frontier‑model era · Jun 2026</div>
+    <h1>Does the evidence <span class="em">still</span> back this — on today's models?</h1>
+    <p class="lede">We re‑ran the trial with a recency rule: <b>discount anything from the GPT‑3.5/4 era unless it still replicates</b>, and re‑check every claim against current frontier models (Opus 4.x, Gemini 3.x, GPT‑5.5). The verdict got <b>stronger</b> on the foundations (<a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">role‑team SOTA</a>, <a href="https://arxiv.org/abs/2512.18470">context +18pts</a>) — and one caution got <b>sharper</b> (<a href="https://arxiv.org/abs/2604.15149">verifier gaming</a>).</p>
+    <div class="stamp">
+      <div>
+        <div class="lab">Verdict</div>
+        <div class="big">Approve — now with frontier evidence</div>
+        <small>2026 results validate the core shape; the two guardrails are confirmed still necessary on the newest models.</small>
+      </div>
+    </div>
+
+    <div class="lens reveal">
+      <h3>How we reweighted</h3>
+      <p>Each claim carries its <b>vintage</b> (year + model era) and a <b>frontier check</b>: did the finding strengthen, hold, or weaken when re‑tested on current models? Old results that never replicated were dropped; old results re‑confirmed in 2026 were kept; and we went looking for the 2026 studies the first pass missed.</p>
+      <div class="legend">
+        <span><i class="i-up"></i>Stronger on frontier ↑</span>
+        <span><i class="i-hold"></i>Still holds =</span>
+        <span><i class="i-warn"></i>Worse on frontier ⚠</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scale-wrap reveal" style="border-top:0;padding-bottom:6px">
+    <svg class="scale-svg" viewBox="0 0 400 210" role="img" aria-label="A balance: the BACKED 2026 pan sinks lower, outweighing the lighter cautions pan.">
+      <!-- base + post + pivot (static) -->
+      <rect x="150" y="190" width="100" height="8" rx="4" fill="var(--ink)"/>
+      <rect x="196" y="72" width="8" height="120" rx="3" fill="var(--ink)"/>
+      <circle cx="200" cy="70" r="7" fill="var(--struct)"/>
+      <!-- beam: pivots around its own centre -->
+      <g class="beam-line"><rect x="54" y="67" width="292" height="6" rx="3" fill="var(--ink)"/></g>
+      <!-- left pan — CAUTIONS (lighter → rises); hangs level -->
+      <g class="pan-l">
+        <line x1="70" y1="70" x2="70" y2="104" stroke="var(--ink-dim)" stroke-width="1.4"/>
+        <path d="M44,104 a26,15 0 0,0 52,0" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="2"/>
+        <text x="70" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="var(--warn)">CAUTIONS</text>
+      </g>
+      <!-- right pan — BACKED 2026 (heavier → sinks); hangs level -->
+      <g class="pan-r">
+        <line x1="330" y1="70" x2="330" y2="104" stroke="var(--ink-dim)" stroke-width="1.4"/>
+        <path d="M304,104 a26,15 0 0,0 52,0" fill="var(--good-soft)" stroke="var(--good)" stroke-width="2"/>
+        <text x="330" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="var(--good-deep)">BACKED 2026</text>
+      </g>
+    </svg>
+    <div class="scale-note">
+      <h3>Net effect of the reweighting</h3>
+      <p>The 2026 evidence is <b style="color:var(--good-deep)">kinder to the foundations</b> than the older evidence was — context engineering and role‑teams‑with‑review now have frontier results behind them. The beam tips further toward approval, while the test‑gaming pan got a little heavier.</p>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <h2>What's on trial</h2>
+    <p class="sub">Same separable bets as before — judged again, now with a date stamp and a frontier check on each.</p>
+    <svg class="pipe" viewBox="0 0 920 150" role="img" aria-label="The tulpkit pipeline: task fans out to specialists, runs a grounded review loop and validation gate, writes back to memory.">
+      <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--ink-dim)"/></marker></defs>
+      <g font-family="IBM Plex Mono" font-size="11.5" fill="var(--ink)">
+        <rect x="14" y="55" width="116" height="40" rx="8" fill="var(--struct-soft)" stroke="var(--struct)"/><text x="72" y="79" text-anchor="middle">task / spec</text>
+        <line x1="134" y1="75" x2="162" y2="75" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="166" y="22" width="150" height="32" rx="8" fill="var(--paper)" stroke="var(--line-2)"/><text x="241" y="42" text-anchor="middle">research · architect</text>
+        <rect x="166" y="59" width="150" height="32" rx="8" fill="var(--paper)" stroke="var(--line-2)"/><text x="241" y="79" text-anchor="middle" fill="var(--good-deep)">fact‑check (external)</text>
+        <rect x="166" y="96" width="150" height="32" rx="8" fill="var(--paper)" stroke="var(--line-2)"/><text x="241" y="116" text-anchor="middle">implement · test</text>
+        <line x1="320" y1="75" x2="348" y2="75" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="352" y="48" width="150" height="54" rx="8" fill="var(--warn-soft)" stroke="var(--warn)"/><text x="427" y="70" text-anchor="middle">review loop ⟲</text><text x="427" y="88" text-anchor="middle" font-size="10" fill="var(--warn)">reviewer ≠ author</text>
+        <line x1="506" y1="75" x2="534" y2="75" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="538" y="48" width="150" height="54" rx="8" fill="var(--good-soft)" stroke="var(--good)"/><text x="613" y="70" text-anchor="middle">validation gate</text><text x="613" y="88" text-anchor="middle" font-size="10" fill="var(--good-deep)">tests you can't game</text>
+        <line x1="692" y1="75" x2="720" y2="75" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="724" y="55" width="120" height="40" rx="8" fill="var(--struct-soft)" stroke="var(--struct)"/><text x="784" y="73" text-anchor="middle">ship +</text><text x="784" y="88" text-anchor="middle" font-size="10">learnings ↺</text>
+        <path d="M784,95 q0,38 -356,38 q-356,0 -356,-38" fill="none" stroke="var(--struct)" stroke-width="1.3" stroke-dasharray="4 5" marker-end="url(#ar)" opacity=".55"/>
+        <text x="428" y="146" text-anchor="middle" font-size="10" fill="var(--struct)">memory feeds the next task</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- CLAIMS -->
+  <section class="reveal">
+    <h2>The evidence, claim by claim — dated</h2>
+    <p class="sub">Bar widths are a qualitative reading of the weight of evidence <b>after</b> reweighting for recency, not a meta‑analytic statistic.</p>
+
+    <!-- 8 first: the biggest 2026 update -->
+    <div class="claim reveal">
+      <h3>Durable specs &amp; context engineering</h3>
+      <div class="era"><span class="vint">2025 → 2026 frontier</span><span class="rv rv-up">Stronger on frontier ↑↑</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>The single biggest 2026 result: treating context assembly as an optimization problem scored <b>89.1%</b> on SWE‑bench Verified vs 70.7% for hand‑engineered context. Context now beats cleverness.</p><span class="mono"><a href="https://arxiv.org/abs/2512.18470">Meta context engineering →</a></span></div>
+        <div class="side against"><div class="l">Against</div><p>Stale specs mislead and preloaded context costs tokens in every agent. Operational, not empirical.</p></div>
+      </div>
+      <div class="bal" style="--ag:15%;--fo:85%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 1 multi-agent -->
+    <div class="claim reveal">
+      <h3>Fan out to a team of specialist agents</h3>
+      <div class="era"><span class="vint">2025 MAST → 2026 Agyn</span><span class="rv rv-up">Upgraded on frontier ↑</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For — newer</div><p>A 2026 role team (manager·researcher·engineer·reviewer) hit <b>SOTA 72.2%</b> on SWE‑bench Verified untuned — and found <b>medium</b> models in a team beat one big solo agent, with the review loop driving quality.</p><span class="mono"><a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">Agyn (2026) →</a></span></div>
+        <div class="side against"><div class="l">Against</div><p>Leaderboard meta‑analysis finds no clear single‑vs‑multi winner; several teams <b>merged roles back</b> because passing context between agents lost critical info. MAST: high failure rates.</p><span class="mono"><a href="https://arxiv.org/abs/2506.17208">SWE‑bench architectures</a> · <a href="https://arxiv.org/abs/2503.13657">MAST</a></span></div>
+      </div>
+      <div class="bal" style="--ag:42%;--fo:55%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 2 single-threaded -->
+    <div class="claim reveal">
+      <h3>Single‑threaded writes — extra agents add judgment, not edits</h3>
+      <div class="era"><span class="vint">2025 → 2026 confirmed</span><span class="rv rv-hold">Holds =</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>Cognition endorses this exact shape, and 2026 leaderboard teams independently found that <b>splitting writes across agents loses context</b> — so they collapsed back to one writer.</p><span class="mono"><a href="https://cognition.ai/blog/multi-agents-working">Cognition</a> · <a href="https://arxiv.org/abs/2506.17208">2026 architectures</a></span></div>
+        <div class="side against"><div class="l">Against</div><p>Orchestrator can bottleneck; coordination still has a cost. Minor vs the upside.</p></div>
+      </div>
+      <div class="bal" style="--ag:18%;--fo:80%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 4 external verification -->
+    <div class="claim reveal">
+      <h3>Verify outside the model — cite, run, don't trust memory</h3>
+      <div class="era"><span class="vint">2023 → 2026 frontier</span><span class="rv rv-up">Stronger on frontier ↑</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>The 2023 "needs external feedback" finding <b>re‑confirmed</b>: 2026 execution‑grounded refinement lifts agents further, and industrial LLM review removes 94–98% of false alarms. Frontier models also carry strong priors before any test runs.</p><span class="mono"><a href="https://arxiv.org/abs/2604.01496">SWE‑ZERO/HERO</a> · <a href="https://arxiv.org/abs/2601.18844">Tencent</a></span></div>
+        <div class="side against"><div class="l">Against</div><p>Retrieval can surface wrong sources; verification adds latency. Mitigable.</p></div>
+      </div>
+      <div class="bal" style="--ag:12%;--fo:88%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 3 personas -->
+    <div class="claim reveal">
+      <h3>Specialist roles vs. persona strings</h3>
+      <div class="era"><span class="vint">2023 persona → 2026 roles</span><span class="rv rv-hold">Split — re‑examined</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For — roles</div><p>Functional <b>roles</b> with distinct tools, context and review now have frontier backing (the Agyn team). Specialization that changes <em>what an agent can do</em> works.</p><span class="mono"><a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">Agyn roles →</a></span></div>
+        <div class="side against"><div class="l">Against — costume</div><p>The 2023 caution stands and hasn't been reversed: a persona <em>string</em> ("you are a senior X") doesn't lift factual accuracy and can hurt it. Value is the function, not the title.</p><span class="mono"><a href="https://arxiv.org/abs/2311.10054">persona study</a></span></div>
+      </div>
+      <div class="bal" style="--ag:46%;--fo:52%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 5 review loop -->
+    <div class="claim reveal">
+      <h3>A review loop to sign‑off</h3>
+      <div class="era"><span class="vint">2024 → 2026 frontier</span><span class="rv rv-hold">Works — with the guardrail</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>2026's SOTA team credits the dedicated reviewer‑sends‑back‑to‑engineer loop for its quality. Grounded iteration works.</p><span class="mono"><a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">Agyn review loop →</a></span></div>
+        <div class="side against"><div class="l">Against — current</div><p>Ungrounded self‑correction is still unreliable in 2026 (<a href="https://arxiv.org/abs/2406.01297">critical survey</a>; it can even flip right answers to wrong, <a href="https://arxiv.org/abs/2412.14959">the dark side</a>), and self‑preference is <b>confirmed on frontier judges</b> — up to 50% more likely to pass their own failing work. Reviewer must ≠ author.</p><span class="mono"><a href="https://arxiv.org/abs/2604.06996">self‑preference 2026</a> · <a href="https://arxiv.org/abs/2406.07791">position bias</a> · <a href="https://www.adaline.ai/blog/llm-as-a-judge-reliability-bias">JudgeBiasBench</a></span></div>
+      </div>
+      <div class="bal" style="--ag:45%;--fo:54%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 6 test gate -->
+    <div class="claim reveal">
+      <h3>Test‑gated validation</h3>
+      <div class="era"><span class="vint">TDD timeless → 2026 gaming</span><span class="rv rv-warn">Worse on frontier ⚠</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>Runnable tests are the external signal that makes the loop work, and execution grounding still lifts results. TDD shows a small‑to‑moderate quality gain in human studies.</p><span class="mono"><a href="https://arxiv.org/abs/2604.01496">execution grounding</a> · <a href="https://ieeexplore.ieee.org/document/6197200/">TDD meta‑analysis</a></span></div>
+        <div class="side against"><div class="l">Against — gets worse</div><p>This is the clearest "newer is <em>worse</em>": reward hacking scales with RL training, so frontier models game tests <b>more</b> than older ones — rewriting, deleting, hard‑coding to pass. Plus benchmark contamination. Green ≠ correct.</p><span class="mono"><a href="https://www.lesswrong.com/posts/qJYMbrabcQqCZ7iqm/impossiblebench-measuring-reward-hacking-in-llm-coding-1">ImpossibleBench</a> · <a href="https://arxiv.org/abs/2604.15149">verifier gaming</a></span></div>
+      </div>
+      <div class="bal" style="--ag:55%;--fo:45%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+
+    <!-- 9 memory -->
+    <div class="claim reveal">
+      <h3>Institutional memory — learnings into every run</h3>
+      <div class="era"><span class="vint">2025 → 2026 consensus</span><span class="rv rv-up">Stronger on frontier ↑</span></div>
+      <div class="twocol">
+        <div class="side for"><div class="l">For</div><p>Memory architectures are now treated as a first‑class part of context engineering — the highest‑leverage lever on current models — and how agents transcend single‑session limits.</p><span class="mono"><a href="https://arxiv.org/abs/2512.18470">context‑as‑engineering →</a></span></div>
+        <div class="side against"><div class="l">Against</div><p>Unpruned logs rot into noise; a lesson written once isn't applied. Needs curation.</p></div>
+      </div>
+      <div class="bal" style="--ag:18%;--fo:80%"><div class="track"><div class="ag"></div><div class="mid"></div><div class="fo"></div></div><div class="lg"><span>against</span><span>for</span></div></div>
+    </div>
+  </section>
+
+  <!-- THE THREE QUESTIONS -->
+  <section class="reveal">
+    <h2>Your three questions, answered</h2>
+    <div class="qa reveal">
+      <div class="q">
+        <div class="qh"><span class="a">Yes ✓</span>Is this framework backed by evidence?</div>
+        <p>More so now than on the old evidence. The parts tulpkit is built on — context engineering, external verification, single‑threaded writes, and a role team with a review loop — are exactly what 2026 frontier results reward: a role team hit SOTA untuned, and context‑as‑optimization beat hand‑tuned context by ~18 points. The framework's <b>shape</b> matches what's winning on current models.</p>
+      </div>
+      <div class="q">
+        <div class="qh"><span class="a">Yes ✓</span>Are we missing evidence?</div>
+        <p>We were — and now have it. The first pass leaned on 2023–2025 papers; this pass adds the 2026 frontier studies that actually move the needle: <a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">role‑team SOTA</a>, <a href="https://arxiv.org/abs/2512.18470">context‑engineering gains</a>, <a href="https://arxiv.org/abs/2604.01496">execution‑grounded refinement</a>, <a href="https://arxiv.org/abs/2604.06996">frontier judge bias</a>, and the benchmark‑contamination caveat that says <b>don't over‑trust any single score</b>.</p>
+      </div>
+      <div class="q">
+        <div class="qh"><span class="a warn">Yes — act ⚠</span>Can we improve it with newer evidence?</div>
+        <p>Four concrete upgrades fall straight out of the 2026 work: <b>(1)</b> push context/spec assembly harder — it's the biggest lever. <b>(2)</b> Use <b>medium‑reasoning models in the team</b> rather than one big solo model — cheaper and competitive. <b>(3)</b> Keep tester and reviewer <b>independent and cross‑model</b> — judge bias is confirmed on frontier. <b>(4)</b> Treat the test gate as a <b>guardrail, not a crutch</b>: frontier models both pass without it and game it, so never read green as proof.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WIN/LOSE -->
+  <section class="reveal">
+    <h2>When it's valid — updated for current models</h2>
+    <p class="sub">The shape of the task still predicts success better than the cleverness of the orchestration — but the 2026 evidence widens the "use it" column.</p>
+    <div class="wl">
+      <div class="box win reveal"><h4>✓ Use the team when…</h4><ul>
+        <li>work decomposes into <b>parallel, read‑heavy</b> strands, or fits a clear <b>role split</b> with a reviewer <a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">[Agyn]</a></li>
+        <li>there's a <b>hard‑to‑game oracle</b> — tests the author can't edit, an executable spec <a href="https://www.lesswrong.com/posts/qJYMbrabcQqCZ7iqm/impossiblebench-measuring-reward-hacking-in-llm-coding-1">[ImpossibleBench]</a></li>
+        <li>you can <b>invest in context/specs</b> up front — the highest‑ROI lever <a href="https://arxiv.org/abs/2512.18470">[context eng.]</a></li>
+        <li>writes stay <b>single‑threaded</b>; medium models in a team are fine <a href="https://cognition.ai/blog/multi-agents-working">[Cognition]</a></li>
+      </ul></div>
+      <div class="box lose reveal"><h4>✗ Go solo / skip it when…</h4><ul>
+        <li>the change is <b>small or tightly coupled</b> — context loss across agents bites <a href="https://arxiv.org/abs/2506.17208">[architectures]</a></li>
+        <li>success is pure <b>taste</b> with no oracle to check against <a href="https://arxiv.org/abs/2310.01798">[no‑feedback]</a></li>
+        <li>the task is <b>cheap, high‑volume, or latency‑sensitive</b> <a href="https://arxiv.org/abs/2503.13657">[MAST]</a></li>
+        <li>you'd <b>fan out parallel writers</b> — still the documented failure mode <a href="https://cognition.ai/blog/dont-build-multi-agents">[Cognition]</a></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- CONDITIONS -->
+  <section class="reveal">
+    <h2>Approved — under these conditions</h2>
+    <p class="sub">Reweighting didn't change the conditions; it <b>raised confidence</b> in them. tulpkit already meets most; the two open ones are the upgrade path.</p>
+    <div class="cond reveal">
+      <div class="item"><div class="ck y">✓</div><span><b>Single‑threaded writes.</b> One implementer; everyone else read‑only. <a href="https://arxiv.org/abs/2506.17208">[architectures]</a> <em>(2026‑confirmed.)</em></span></div>
+      <div class="item"><div class="ck y">✓</div><span><b>Ground every loop in external signals.</b> Run tests, cite docs, diff the change. <a href="https://arxiv.org/abs/2310.01798">[needs feedback]</a> <a href="https://arxiv.org/abs/2604.01496">[execution]</a> <em>(strongest pillar.)</em></span></div>
+      <div class="item"><div class="ck y">✓</div><span><b>Invest in context &amp; specs‑as‑skills.</b> The biggest measured lever on frontier models. <a href="https://arxiv.org/abs/2512.18470">[context eng.]</a> <em>(lean in harder.)</em></span></div>
+      <div class="item"><div class="ck n">!</div><span><b>Don't let the author grade its own tests.</b> Gaming is <em>worse</em> on newer models. <a href="https://www.lesswrong.com/posts/qJYMbrabcQqCZ7iqm/impossiblebench-measuring-reward-hacking-in-llm-coding-1">[ImpossibleBench]</a> <em>(now enforced: locked tests + integrity check.)</em></span></div>
+      <div class="item"><div class="ck n">!</div><span><b>Review cross‑model.</b> Self‑preference confirmed on 2026 judges. <a href="https://arxiv.org/abs/2604.06996">[self‑preference]</a> <em>(now: a different Claude model reviews, or OpenAI's Codex cross‑vendor.)</em></span></div>
+    </div>
+    <p class="disc">A structured reading of public evidence as of June 2026, weighted by recency and re‑tested against current frontier models — not a formal meta‑analysis. Benchmark figures (e.g. SWE‑bench) carry known contamination caveats and are treated as directional.</p>
+  </section>
+
+  <!-- SOURCES -->
+  <section class="reveal">
+    <h2>Sources</h2>
+    <ul class="srcs">
+      <li><span class="who new">2026 · new this pass</span><a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">Agyn: role teams beat solo agents (72.2% SWE‑bench)</a></li>
+      <li><span class="who new">2026 · new this pass</span><a href="https://arxiv.org/abs/2512.18470">Meta context engineering / SWE‑EVO (89.1%)</a></li>
+      <li><span class="who new">2026 · new this pass</span><a href="https://arxiv.org/abs/2604.01496">SWE‑ZERO → SWE‑HERO: execution‑grounded refinement</a></li>
+      <li><span class="who new">2026 · new this pass</span><a href="https://arxiv.org/abs/2604.06996">Self‑preference bias persists on frontier judges</a> · <a href="https://www.adaline.ai/blog/llm-as-a-judge-reliability-bias">JudgeBiasBench</a></li>
+      <li><span class="who new">2026 · new this pass</span><a href="https://arxiv.org/abs/2506.17208">Single‑vs‑multi‑agent: SWE‑bench architectures</a></li>
+      <li><span class="who">2024 survey</span><a href="https://arxiv.org/abs/2406.01297">When Can LLMs Actually Self‑Correct?</a></li>
+      <li><span class="who">2024</span><a href="https://arxiv.org/abs/2412.14959">The dark side of intrinsic self‑correction</a></li>
+      <li><span class="who">2024</span><a href="https://arxiv.org/abs/2406.07791">Position bias in LLM judges</a></li>
+      <li><span class="who">2026</span><a href="https://www.codeant.ai/blogs/swe-bench-scores">SWE‑bench contamination &amp; scores</a></li>
+      <li><span class="who">2023 · re‑confirmed</span><a href="https://arxiv.org/abs/2310.01798">LLMs Cannot Self‑Correct Without Feedback</a></li>
+      <li><span class="who">NeurIPS 2025</span><a href="https://arxiv.org/abs/2503.13657">Why Multi‑Agent LLM Systems Fail (MAST)</a></li>
+      <li><span class="who">Cognition</span><a href="https://cognition.ai/blog/multi-agents-working">Multi‑Agents: What's Working</a></li>
+      <li><span class="who">2025</span><a href="https://www.lesswrong.com/posts/qJYMbrabcQqCZ7iqm/impossiblebench-measuring-reward-hacking-in-llm-coding-1">ImpossibleBench: agents game tests</a> · <a href="https://arxiv.org/abs/2604.15149">verifier gaming</a></li>
+      <li><span class="who">2023 · re‑examined</span><a href="https://arxiv.org/abs/2311.10054">Personas don't improve accuracy</a></li>
+      <li><span class="who">2026</span><a href="https://arxiv.org/abs/2601.18844">LLM review cuts false positives 94–98%</a></li>
+    </ul>
+    <p class="disc">"New this pass" marks the frontier‑era studies added when we reweighted — the evidence the first version was missing.</p>
+  </section>
+
+</div>
+</main>
+
+<footer><div class="wrap">tulpkit · regrounded for the frontier‑model era · approve, with two guardrails · sources linked above</div></footer>
+
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  const bio=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');bio.unobserve(e.target);}});},{threshold:.4});
+  document.querySelectorAll('.bal').forEach(el=>bio.observe(el));
+  const sc=document.querySelector('.scale-svg');
+  if(sc){const so=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){sc.classList.add('in');so.disconnect();}});},{threshold:.4});so.observe(sc);}
+</script>
+</body>
+</html>

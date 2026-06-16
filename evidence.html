@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tulpkit — every decision, backed by evidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1f2f4;--paper:#fbfbfa;--ink:#15181d;--ink-mid:#454c57;--ink-dim:#79808c;
+    --line:#dcdee2;--line-2:#c8ccd2;
+    --good:#1c7c54;--good-soft:#e3efe9;--good-deep:#155e40;
+    --warn:#bb4630;--warn-soft:#f3e4df;
+    --struct:#3a3f8f;--struct-soft:#e7e8f4;
+    --serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+    --maxw:940px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(180deg,#e9f1ec,#f1f2f4 280px)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+  .mono{font-family:var(--mono)}
+  a{color:var(--struct);text-decoration:none;border-bottom:1px solid var(--struct-soft)}
+  a:hover{border-bottom-color:var(--struct)}
+
+  .top{position:sticky;top:0;z-index:30;background:rgba(241,242,244,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top .row{display:flex;justify-content:space-between;align-items:center;height:52px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .top b{color:var(--ink);font-weight:600}
+  .top a.full{color:var(--struct);border:0}
+
+  .hero{padding:60px 0 30px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--good-deep);margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(32px,5.4vw,56px);line-height:1.03;letter-spacing:-.016em;margin:0 0 20px;max-width:18ch}
+  .lede{font-size:clamp(16px,2vw,19px);color:var(--ink-mid);max-width:62ch;margin:0 0 22px}
+  .lede b{color:var(--ink);font-weight:600}
+  .by{font-family:var(--mono);font-size:13px;color:var(--ink-dim)}
+  .by b{color:var(--good-deep)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:22px;font-family:var(--mono);font-size:11px}
+  .legend span{display:flex;align-items:center;gap:6px;color:var(--ink-dim)}
+  .legend i{width:9px;height:9px;border-radius:3px}
+  .i-up{background:var(--good)}.i-st{background:var(--struct)}.i-gd{background:var(--warn)}
+
+  section{padding:38px 0;border-top:1px solid var(--line)}
+  .sec-h{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3vw,29px);letter-spacing:-.01em;margin:0 0 20px}
+
+  .dec{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin-bottom:14px;border-left:4px solid var(--struct)}
+  .dec.up{border-left-color:var(--good)} .dec.gd{border-left-color:var(--warn)}
+  .d-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .dec h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 2px;max-width:46ch}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .t-up{background:var(--good-soft);color:var(--good-deep)} .t-st{background:var(--struct-soft);color:var(--struct)} .t-gd{background:var(--warn-soft);color:var(--warn)}
+  .d-where{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin:6px 0 10px}
+  .d-where::before{content:"⌖ ";color:var(--struct)}
+  .dec p{margin:0 0 10px;color:var(--ink-mid);font-size:14.5px}
+  .d-ev{font-size:13px;color:var(--ink-dim);border-top:1px dashed var(--line);padding-top:10px}
+  .d-ev b{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--good-deep)}
+  .d-ev a{font-size:13px}
+
+  .closing{background:var(--good-soft);border:1px solid #c8e0d3;border-radius:16px;padding:26px 28px}
+  .closing h2{margin-top:0}
+  .closing p{color:var(--ink-mid);font-size:15px;margin:0 0 8px;max-width:64ch}
+  .closing a.btn{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:13px;background:var(--good-deep);color:#fff;border:0;border-radius:8px;padding:9px 16px}
+
+  footer{border-top:1px solid var(--line);padding:24px 0 60px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .reveal{opacity:0;transform:translateY(13px);transition:opacity .5s ease,transform .5s ease}
+  .reveal.in{opacity:1;transform:none}
+  :focus-visible{outline:2px solid var(--struct);outline-offset:3px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}.reveal{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap row"><span><b>tulpkit</b> · evidence ledger</span><a class="full mono" href="research.html">full analysis →</a></div></header>
+
+<main><div class="wrap">
+
+  <section class="hero reveal" style="border-top:0">
+    <div class="eyebrow">Why every part exists</div>
+    <h1>Every decision in this plugin, backed.</h1>
+    <p class="lede">tulpkit isn't a pile of opinions — each design choice traces to a specific study, weighted for the <b>frontier‑model era</b>. This ledger maps the choice to where it lives in the code and to the paper you can read. The honest cautions are here too, as <b>enforced guardrails</b>.</p>
+    <p class="by">A <b>research‑backed</b> Claude Code plugin by <b>fedenunez</b>.</p>
+    <div class="legend">
+      <span><i class="i-up"></i>strongly supported</span>
+      <span><i class="i-st"></i>supported / right‑sized</span>
+      <span><i class="i-gd"></i>guardrail (a real caution, enforced)</span>
+    </div>
+  </section>
+
+  <!-- FOUNDATIONS -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--good-deep)">Foundations</p>
+    <h2>The cheap, high‑leverage core</h2>
+
+    <div class="dec up reveal"><div class="d-head"><h3>Assemble the brief before any fan‑out (P0)</h3><span class="tag t-up">Biggest lever</span></div>
+      <div class="d-where">skills/orchestrated-delivery · scripts/orchestrator.ts (P0) · task issue.md template</div>
+      <p>Context assembly is the single highest‑ROI lever on current models, so the orchestrator compiles one canonical brief — specs, conventions, matching learnings, acceptance criteria — before spawning anyone.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2512.18470">context‑as‑optimization, 89.1% vs 70.7%</a> · <a href="https://arxiv.org/abs/2503.13657">MAST: ~42% of failures are spec failures</a></div>
+    </div>
+
+    <div class="dec up reveal"><div class="d-head"><h3>Verify externally — cite, don't trust memory</h3><span class="tag t-up">Strongly supported</span></div>
+      <div class="d-where">skills/specialist-protocol · agents/code-reviewer · domain-researcher</div>
+      <p>Facts, APIs, versions and status codes are checked against the authoritative source and cited, never recalled. Self‑correction only helps when grounded in external feedback.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2310.01798">needs external feedback (DeepMind)</a> · <a href="https://arxiv.org/abs/2604.01496">execution‑grounded refinement</a> · <a href="https://arxiv.org/abs/2601.18844">industrial LLM review 94–98%</a></div>
+    </div>
+
+    <div class="dec up reveal"><div class="d-head"><h3>Specs as skills, progressively disclosed</h3><span class="tag t-st">Supported</span></div>
+      <div class="d-where">skills/* · examples/CLAUDE.md</div>
+      <p>Durable, discoverable specs instead of context re‑typed each run — directly attacking the largest failure category in multi‑agent systems.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2512.18470">context engineering</a> · <a href="https://arxiv.org/abs/2503.13657">MAST spec failures</a></div>
+    </div>
+
+    <div class="dec up reveal"><div class="d-head"><h3>Learnings memory wired into every run</h3><span class="tag t-st">Supported</span></div>
+      <div class="d-where">examples/LEARNINGS.md · examples/CLAUDE.md (read‑before / append‑after)</div>
+      <p>Hard‑won lessons are written back and re‑read, so the system stops repeating mistakes — external memory as a first‑class part of context.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2512.18470">memory in context engineering</a> · <a href="https://blog.bytebytego.com/p/how-anthropic-built-a-multi-agent">external‑memory pattern</a></div>
+    </div>
+  </section>
+
+  <!-- TEAM SHAPE -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--struct)">Team shape</p>
+    <h2>A small team, pointed right</h2>
+
+    <div class="dec reveal"><div class="d-head"><h3>Single‑threaded writes — one implementer</h3><span class="tag t-st">Supported</span></div>
+      <div class="d-where">agents/implementer (sole writer) · orchestrator owns the state machine</div>
+      <p>Exactly one agent writes; the rest add judgment. Splitting writes across agents loses context — teams that tried it merged the roles back.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://cognition.ai/blog/multi-agents-working">Cognition: single‑threaded works</a> · <a href="https://arxiv.org/abs/2506.17208">context loss across agents</a></div>
+    </div>
+
+    <div class="dec reveal"><div class="d-head"><h3>Five core roles, not eight</h3><span class="tag t-st">Right‑sized</span></div>
+      <div class="d-where">agents/ — researcher · architect · implementer · tester · reviewer (+ ux on‑demand)</div>
+      <p>A small role team is what reaches state‑of‑the‑art; over‑decomposition adds coordination surface that fails. The two fact‑checkers folded into the reviewer's verify remit.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">role team = SOTA 72.2%</a> · <a href="https://arxiv.org/abs/2503.13657">over‑decomposition failures</a></div>
+    </div>
+
+    <div class="dec reveal"><div class="d-head"><h3>Medium models in the team; opus where it counts</h3><span class="tag t-st">Cost‑effective</span></div>
+      <div class="d-where">agents/* frontmatter — sonnet for makers; opus for architect &amp; reviewer</div>
+      <p>A well‑structured team of medium models beats one big solo agent; reasoning‑ and independence‑critical roles (architect, reviewer) get the bigger model.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://dev.to/nikita_benkovich_eb86e54d/coding-agent-teams-outperform-solo-agents-722-on-swe-bench-verified-4of5">medium team beats big solo (Agyn)</a></div>
+    </div>
+
+    <div class="dec reveal"><div class="d-head"><h3>Functional roles, not persona costumes</h3><span class="tag t-gd">Used carefully</span></div>
+      <div class="d-where">skills/specialist-protocol — self‑frame specifically; verifiers run cold</div>
+      <p>Roles change what an agent <em>does</em> (tools, scope, review). A persona <em>string</em> ("you are a senior X") doesn't lift factual accuracy and can hurt it, so verifiers drop the confident voice.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2311.10054">personas don't improve accuracy</a> · <a href="https://www.searchenginejournal.com/research-you-are-an-expert-prompts-can-damage-factual-accuracy/570397/">"expert" prompts can hurt</a></div>
+    </div>
+  </section>
+
+  <!-- GUARDRAILS -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--warn)">Guardrails</p>
+    <h2>The honest cautions — enforced, not hidden</h2>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>The tester owns tests; the implementer can't touch them</h3><span class="tag t-gd">Anti‑gaming</span></div>
+      <div class="d-where">agents/tester · agents/implementer · orchestrator tests‑lock / tests‑verify</div>
+      <p>Capable models game gates they can edit — rewriting or deleting tests to go green. The tester locks the suite; a hash check at sign‑off refuses if locked tests changed.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://www.lesswrong.com/posts/qJYMbrabcQqCZ7iqm/impossiblebench-measuring-reward-hacking-in-llm-coding-1">ImpossibleBench: agents game tests</a> · <a href="https://arxiv.org/abs/2604.15149">verifier gaming scales with RL</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>Green ≠ done — a spec‑conformance attestation</h3><span class="tag t-gd">Necessary ≠ sufficient</span></div>
+      <div class="d-where">scripts/orchestrator.ts (signoff gate) · signoff-checklist.md</div>
+      <p>Passing tests can mean weak tests. Sign‑off is refused unless the reviewer attests the implementation meets the acceptance criteria, not merely that the suite is green.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2604.15149">Goodhart / reward hacking</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>The reviewer is never the author</h3><span class="tag t-gd">De‑bias</span></div>
+      <div class="d-where">agents/code-reviewer — opus, ≠ the sonnet implementer</div>
+      <p>A model flatters its own work. Self‑preference is confirmed on 2026 frontier judges, so the reviewer always runs on a different model than the implementer.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2604.06996">self‑preference persists on frontier</a> · <a href="https://arxiv.org/abs/2406.07791">position bias</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>Cross‑vendor review with Codex, when available</h3><span class="tag t-gd">Strongest independence</span></div>
+      <div class="d-where">scripts/codex.ts (detect → review/test) · skill conditionally summons it</div>
+      <p><b>Claude</b> builds the code; self‑preference is strongest <em>within a model family</em>, so if <b>Codex</b> is installed and logged in (checked by code), the review runs through <b>OpenAI</b> — a different vendor — otherwise it falls back to a different <b>Claude</b> model.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://www.adaline.ai/blog/llm-as-a-judge-reliability-bias">no judge uniformly reliable (2026)</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>No ungrounded self‑review loops</h3><span class="tag t-gd">Avoided by design</span></div>
+      <div class="d-where">skills/specialist-protocol §5 — improve from feedback, not re‑reading yourself</div>
+      <p>"Think again" without an external signal doesn't reliably help and can flip right answers to wrong, so every loop is anchored to tests, docs, or the diff.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2406.01297">when self‑correction works (survey)</a> · <a href="https://arxiv.org/abs/2412.14959">the dark side</a></div>
+    </div>
+  </section>
+
+  <!-- VALIDATION -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--good-deep)">Validation</p>
+    <h2>Executable, adaptive, honest</h2>
+
+    <div class="dec up reveal"><div class="d-head"><h3>The gate runs the real tests — "pass" can't be a claim</h3><span class="tag t-up">Executable</span></div>
+      <div class="d-where">scripts/orchestrator.ts test (spawns the command, checks exit 0)</div>
+      <p>Execution feedback is the verifier that makes the loop work, so the state machine runs the command itself instead of trusting a "tests pass" assertion.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2310.01798">execution feedback fixes code</a> · <a href="https://arxiv.org/abs/2604.01496">grounded refinement</a></div>
+    </div>
+
+    <div class="dec reveal"><div class="d-head"><h3>Adaptive TDD — test‑first by default, not forced</h3><span class="tag t-st">Adaptive</span></div>
+      <div class="d-where">orchestrator detect / validation --mode tdd|adapt|manual</div>
+      <p>TDD improves quality but costs 15–35% more time, so the policy adapts to the project rather than mandating test‑first everywhere.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://ieeexplore.ieee.org/document/6197200/">TDD meta‑analysis: quality up, slower</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>The Stop hook enforces the process — knowingly, not the truth</h3><span class="tag t-gd">Process guard</span></div>
+      <div class="d-where">scripts/enforce-signoff.ts (Stop hook, 8‑block safety valve)</div>
+      <p>Forcing the loop to run a check before stopping attacks premature termination — but we treat it as a process guard, paired with integrity + spec gates, because enforcing a gameable gate isn't proof of correctness.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2503.13657">premature‑termination failures</a> · <a href="https://arxiv.org/abs/2604.15149">why process ≠ truth</a></div>
+    </div>
+  </section>
+
+  <!-- PLANNING & SPECS -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--good-deep)">Planning &amp; specs</p>
+    <h2>Plan small, freeze the spec, verify in numbers</h2>
+    <p class="sub">Added Jun 2026 — grounded while fact‑checking the "Karpathy method" video (see <code>stop-prompting-analysis.md</code>). Each claim was traced to a primary paper; verdicts are deliberately skeptical.</p>
+
+    <div class="dec up reveal"><div class="d-head"><h3>Plan into the smallest independently‑verifiable increments</h3><span class="tag t-up">Strongly supported</span></div>
+      <div class="d-where">commands/plan.md · skills/planning · tasks.ts (nested tree)</div>
+      <p>The strongest‑supported idea in the whole method: decomposing a goal into small, ordered, individually‑checkable steps beats one big spec. <code>/tulpkit:plan</code> produces a sorted nested task tree; each leaf is one gated <code>/make</code> run.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2205.10625">least‑to‑most: 99% vs 16%</a> · <a href="https://arxiv.org/abs/2201.11903">chain‑of‑thought</a></div>
+    </div>
+
+    <div class="dec gd reveal"><div class="d-head"><h3>Spec‑lock — freeze the acceptance criteria</h3><span class="tag t-gd">Anti‑gaming</span></div>
+      <div class="d-where">scripts/orchestrator.ts spec‑lock / spec‑verify · signoff Gate 3 (hardened)</div>
+      <p>Just as a model can edit tests to go green, it can quietly relax the spec to "conform". Once criteria are agreed, <code>spec‑lock</code> hashes them; a change by sign‑off is refused — conformance only counts against the frozen spec.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2305.20050">process supervision &gt; outcome</a> · <a href="https://arxiv.org/abs/2604.15149">Goodhart / reward hacking</a></div>
+    </div>
+
+    <div class="dec reveal"><div class="d-head"><h3>Specs live as skills — discovery is the retrieval layer</h3><span class="tag t-st">Supported</span></div>
+      <div class="d-where">skills/planning · project <code>.claude/skills/&lt;name&gt;</code> (spec: skill:&lt;name&gt;)</div>
+      <p>Design‑affecting knowledge becomes a project skill. Claude Code already auto‑discovers and progressively loads skills, so the project's skills <em>are</em> the searchable knowledge base — external knowledge demonstrably lifts factual accuracy, and we get it without a bespoke retrieval engine.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2005.11401">RAG: more factual generations</a></div>
+    </div>
+
+    <div class="dec up reveal"><div class="d-head"><h3>N‑critic verification panel (opt‑in)</h3><span class="tag t-up">De‑bias</span></div>
+      <div class="d-where">scripts/orchestrator.ts review ‑‑critics N · signoff ‑‑min‑critics N</div>
+      <p>For high‑stakes work, several independent critics (varied model/vendor, each told to refute) vote — recorded and required at sign‑off. Redundant independent verification catches what one reviewer misses, and a distinct critic sidesteps self‑preference.</p>
+      <div class="d-ev"><b>Backed by</b> <a href="https://arxiv.org/abs/2305.14325">multi‑agent debate</a> · <a href="https://arxiv.org/abs/2404.13076">judges favor their own output</a></div>
+    </div>
+  </section>
+
+  <section class="reveal" style="border-top:0">
+    <div class="closing reveal">
+      <h2>Read the full reasoning</h2>
+      <p>This ledger is the short version. The complete adversarial review — weighing evidence for and against each idea, reweighted for current frontier models — is the analysis document.</p>
+      <a class="btn" href="research.html">Open the full analysis →</a>
+    </div>
+  </section>
+
+</div></main>
+<footer><div class="wrap">tulpkit · a research‑backed Claude Code plugin by fedenunez · evidence current to June 2026</div></footer>
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
