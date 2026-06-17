@@ -62,6 +62,29 @@
   .pl.in .node:nth-child(4){transition-delay:.25s}.pl.in .node:nth-child(5){transition-delay:.35s}
   .pl.in .node:nth-child(6){transition-delay:.45s}.pl.in .node:nth-child(7){transition-delay:.55s}
 
+  /* full orchestration flow — animated walkthrough */
+  .flow-wrap{overflow-x:auto;padding-bottom:6px}
+  .flow-svg{width:100%;min-width:700px;height:auto;display:block;margin:0 auto;font-family:var(--mono)}
+  .flow-svg .rail{stroke:var(--struct);stroke-width:2;fill:none;stroke-dasharray:7 6;animation:railflow 1.3s linear infinite}
+  .flow-svg .loop{stroke:var(--warn);stroke-width:2;fill:none;stroke-dasharray:6 6;animation:railflow 1.1s linear infinite}
+  .flow-svg .mem{stroke:var(--good);stroke-width:1.6;fill:none;stroke-dasharray:2 7;opacity:.7;animation:railflow 2s linear infinite}
+  @keyframes railflow{to{stroke-dashoffset:-26}}
+  .flow-svg .fn{transform-box:fill-box;transform-origin:center;animation:fnlift 12s ease-in-out infinite;animation-delay:var(--d)}
+  .flow-svg .fn .box{animation:fnhot 12s ease-in-out infinite;animation-delay:var(--d)}
+  @keyframes fnlift{0%,11%,100%{transform:scale(1)}3.5%,8%{transform:scale(1.055)}}
+  @keyframes fnhot{0%,11%,100%{fill:var(--paper);stroke:var(--line-2)}3.5%,8%{fill:var(--good-soft);stroke:var(--good)}}
+  .flow-svg .comet{fill:var(--good)}
+  .flow-svg .comet-glow{fill:var(--good);opacity:.22}
+  .flow-svg .nlabel{font-size:10.5px;font-weight:600;fill:var(--ink)}
+  .flow-svg .nsub{font-size:8.6px;fill:var(--ink-dim)}
+  .flow-svg .lbl{fill:var(--ink-dim);font-size:9px}
+  .flow-svg .stopband{fill:none;stroke:var(--warn);stroke-width:1.4;stroke-dasharray:3 5;opacity:.5}
+  .flow-svg .stoptag{fill:var(--warn);font-size:10px;font-weight:600}
+  .flow-legend{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .flow-legend span{display:inline-flex;align-items:center;gap:6px}
+  .flow-legend i{width:22px;height:0;border-top:2px solid;display:inline-block}
+  .fl-rail{border-color:var(--struct)}.fl-loop{border-color:var(--warn)}.fl-mem{border-color:var(--good)}
+
   /* commands */
   .cmds{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:640px){.cmds{grid-template-columns:1fr}}
@@ -113,13 +136,13 @@
   table.ref th,table.ref td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
   table.ref th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);font-weight:600}
   :focus-visible{outline:2px solid var(--struct);outline-offset:3px;border-radius:4px}
-  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal,.pl .node{opacity:1;transform:none}html{scroll-behavior:auto}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal,.pl .node{opacity:1;transform:none}html{scroll-behavior:auto}.flow-svg .comet,.flow-svg .comet-glow{display:none}}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap row">
   <span><b>tulpkit</b></span>
-  <nav><a href="#how">how</a><a href="#why">why</a><a href="#install">install</a><a href="evidence.html">evidence</a><a class="cta" href="research.html">full analysis →</a></nav>
+  <nav><a href="#how">how</a><a href="#flow">flow</a><a href="#why">why</a><a href="#install">install</a><a href="evidence.html">evidence</a><a class="cta" href="research.html">full analysis →</a></nav>
 </div></header>
 
 <main>
@@ -165,6 +188,72 @@
       <div class="cmd reveal"><code>/tulpkit:list [state]</code><p>Show a state in detail plus counters for every other state; <span class="mono">tasks.ts tree</span> renders the nested backlog.</p></div>
       <div class="cmd reveal"><code>/tulpkit:remove &lt;slug&gt;</code><p>Delete a task's folder + symlink (recoverable from git); <span class="mono">--cascade</span> removes a whole subtree.</p></div>
       <div class="cmd reveal"><code>/tulpkit:help [topic]</code><p>Visual ASCII explainer of the whole plugin — make, gates, roles, tasks, plan, specs.</p></div>
+    </div>
+  </section>
+
+  <!-- FULL FLOW -->
+  <section id="flow" class="reveal">
+    <p class="sec-h">The whole run, end to end</p>
+    <h2>Watch a task flow through the machine</h2>
+    <p class="sub">A goal becomes a task tree, each leaf runs the staged pipeline, the four gates clear, and the Stop hook won't let the session end until sign-off. The dot is the playhead; each stage lights as it runs.</p>
+    <div class="flow-wrap">
+    <svg class="flow-svg" viewBox="0 0 960 405" role="img" aria-label="Full tulpkit orchestration flow: /plan builds a task tree, then /make runs init, detect/validation, P0 brief, P1 research with spec-lock, P2 build with tests-lock, P3 integrate, P4 review loop, the four gates, and sign-off; learnings feed the next run; a Stop hook wraps the run until sign-off.">
+      <defs>
+        <marker id="ra" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--struct)"/></marker>
+        <marker id="wa" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--warn)"/></marker>
+        <marker id="ma" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--good)"/></marker>
+      </defs>
+
+      <!-- Stop-hook enclosure (behind) -->
+      <rect class="stopband" x="158" y="46" width="800" height="338" rx="16"/>
+      <text class="stoptag" x="170" y="40">🚧 Stop hook — the run can't end until SIGN-OFF (8-block safety valve)</text>
+
+      <!-- memory feedback loop (behind) -->
+      <path class="mem" d="M847,321 C847,18 73,18 73,63" marker-end="url(#ma)"/>
+      <text class="lbl" x="460" y="14" text-anchor="middle" fill="var(--good-deep)">↺ learnings feed the next run</text>
+
+      <!-- rails / connectors -->
+      <path class="rail" d="M132,86 H170" marker-end="url(#ra)"/>
+      <path class="rail" d="M320,86 H350" marker-end="url(#ra)"/>
+      <path class="rail" d="M535,86 H560" marker-end="url(#ra)"/>
+      <path class="rail" d="M710,86 H735" marker-end="url(#ra)"/>
+      <path class="rail" d="M840,111 V191" marker-end="url(#ra)"/>
+      <path class="rail" d="M730,216 H700" marker-end="url(#ra)"/>
+      <path class="rail" d="M560,216 H540" marker-end="url(#ra)"/>
+      <path class="rail" d="M435,241 V321" marker-end="url(#ra)"/>
+      <path class="rail" d="M540,346 H580" marker-end="url(#ra)"/>
+      <path class="rail" d="M730,346 H750" marker-end="url(#ra)"/>
+
+      <!-- review loop + refuse loop -->
+      <path class="loop" d="M435,191 C435,158 837,158 837,191" marker-end="url(#wa)"/>
+      <text class="lbl" x="636" y="152" text-anchor="middle" fill="var(--warn)">fix ⟲ re-review until 0 issues</text>
+      <path class="loop" d="M408,321 C372,300 372,262 410,243" marker-end="url(#wa)"/>
+      <text class="lbl" x="356" y="292" text-anchor="middle" fill="var(--warn)">refuse</text>
+
+      <!-- nodes -->
+      <g class="fn" style="--d:0s"><rect class="box" x="14" y="61" width="118" height="50" rx="10"/><text class="nlabel" x="73" y="83" text-anchor="middle">1 · /plan</text><text class="nsub" x="73" y="98" text-anchor="middle">goal → task tree</text></g>
+      <g class="fn" style="--d:1s"><rect class="box" x="170" y="61" width="150" height="50" rx="10"/><text class="nlabel" x="245" y="83" text-anchor="middle">2 · /make init</text><text class="nsub" x="245" y="98" text-anchor="middle">boot the run · tier</text></g>
+      <g class="fn" style="--d:2s"><rect class="box" x="350" y="61" width="185" height="50" rx="10"/><text class="nlabel" x="442" y="83" text-anchor="middle">3 · detect → validation</text><text class="nsub" x="442" y="98" text-anchor="middle">tdd · adapt · manual</text></g>
+      <g class="fn" style="--d:3s"><rect class="box" x="560" y="61" width="150" height="50" rx="10"/><text class="nlabel" x="635" y="83" text-anchor="middle">4 · P0 brief</text><text class="nsub" x="635" y="98" text-anchor="middle">assemble context</text></g>
+      <g class="fn" style="--d:4s"><rect class="box" x="735" y="61" width="210" height="50" rx="10"/><text class="nlabel" x="840" y="83" text-anchor="middle">5 · P1 research + arch</text><text class="nsub" x="840" y="98" text-anchor="middle">cite sources · 🔒 spec-lock</text></g>
+
+      <g class="fn" style="--d:5s"><rect class="box" x="730" y="191" width="215" height="50" rx="10"/><text class="nlabel" x="837" y="213" text-anchor="middle">6 · P2 build</text><text class="nsub" x="837" y="228" text-anchor="middle">🔒 tests-lock · implementer</text></g>
+      <g class="fn" style="--d:6s"><rect class="box" x="560" y="191" width="140" height="50" rx="10"/><text class="nlabel" x="630" y="213" text-anchor="middle">7 · P3 integrate</text><text class="nsub" x="630" y="228" text-anchor="middle">wire it together</text></g>
+      <g class="fn" style="--d:7s"><rect class="box" x="330" y="191" width="210" height="50" rx="10"/><text class="nlabel" x="435" y="213" text-anchor="middle">8 · P4 review ⟲</text><text class="nsub" x="435" y="228" text-anchor="middle">Codex / 2nd model ≠ author</text></g>
+
+      <g class="fn" style="--d:8s"><rect class="box" x="330" y="321" width="210" height="50" rx="10"/><text class="nlabel" x="435" y="343" text-anchor="middle">9 · GATES</text><text class="nsub" x="435" y="358" text-anchor="middle">green · intact · spec · 0 issues</text></g>
+      <g class="fn" style="--d:9s"><rect class="box" x="580" y="321" width="150" height="50" rx="10"/><text class="nlabel" x="655" y="343" text-anchor="middle">10 · SIGN-OFF ✓</text><text class="nsub" x="655" y="358" text-anchor="middle">auditable + attested</text></g>
+      <g class="fn" style="--d:10s"><rect class="box" x="750" y="321" width="195" height="50" rx="10"/><text class="nlabel" x="847" y="343" text-anchor="middle">11 · ship + learnings</text><text class="nsub" x="847" y="358" text-anchor="middle">memory ↺ next run</text></g>
+
+      <!-- comet playhead -->
+      <circle class="comet-glow" r="9"><animateMotion dur="12s" repeatCount="indefinite" path="M73,86 H840 V216 H435 V346 H847"/></circle>
+      <circle class="comet" r="4.5"><animateMotion dur="12s" repeatCount="indefinite" path="M73,86 H840 V216 H435 V346 H847"/></circle>
+    </svg>
+    </div>
+    <div class="flow-legend">
+      <span><i class="fl-rail"></i> phase flow</span>
+      <span><i class="fl-loop"></i> review / refuse loop</span>
+      <span><i class="fl-mem"></i> learnings feedback</span>
     </div>
   </section>
 
