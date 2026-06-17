@@ -117,7 +117,7 @@
   <section class="hero reveal" style="border-top:0">
     <div class="badge">Research‑backed · Claude Code plugin</div>
     <h1>tulpkit<span class="dot">.</span></h1>
-    <p class="tagline">Run any task as a <b>staged team of Claude agents</b> that can't quietly stop until the work is validated, independently reviewed — by <b>Codex</b> when it's installed — and signed off.</p>
+    <p class="tagline"><b>Plan</b> a goal into a task tree, then run each piece as a <b>staged team of Claude agents</b> that can't quietly stop until the work is validated, independently reviewed — by <b>Codex</b> when it's installed — and signed off.</p>
     <p class="by">by <b>fedenunez</b> — every design decision traced to a study</p>
     <div class="install">
       <span><span class="d"># add the marketplace &amp; install</span></span>
@@ -148,10 +148,12 @@
       </g>
     </svg>
     <div class="cmds" style="margin-top:26px">
-      <div class="cmd reveal"><code>/tulpkit:make &lt;text | task&gt;</code><p>Run the full staged orchestration — on free text, or on an existing task (then auto‑moves it inprogress → done).</p></div>
-      <div class="cmd reveal"><code>/tulpkit:add [bug|feature|…] &lt;title&gt;</code><p>File a task into a git‑backed folder system (<span class="mono">tasks/list</span> + <span class="mono">by‑state</span> symlinks).</p></div>
-      <div class="cmd reveal"><code>/tulpkit:list [state]</code><p>Show a state in detail plus counters for every other state.</p></div>
-      <div class="cmd reveal"><code>/tulpkit:remove &lt;slug&gt;</code><p>Delete a task's folder + symlink (recoverable from git).</p></div>
+      <div class="cmd reveal"><code>/tulpkit:plan &lt;goal&gt;</code><p>Interactively break a goal into a <b>sorted, nested task tree</b> — deciding per piece whether its spec lives in the task or in a project skill. Feeds <span class="mono">/make</span>.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:make &lt;text | task&gt;</code><p>Run the full staged orchestration — on free text or an existing task (auto‑moves it inprogress → done). Honors the plan's tier/spec hints and freezes the spec.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:add [bug|feature|…] &lt;title&gt;</code><p>File a task into a git‑backed folder system (<span class="mono">tasks/list</span> + <span class="mono">by‑state</span> symlinks); nestable via <span class="mono">--parent</span>.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:list [state]</code><p>Show a state in detail plus counters for every other state; <span class="mono">tasks.ts tree</span> renders the nested backlog.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:remove &lt;slug&gt;</code><p>Delete a task's folder + symlink (recoverable from git); <span class="mono">--cascade</span> removes a whole subtree.</p></div>
+      <div class="cmd reveal"><code>/tulpkit:help [topic]</code><p>Visual ASCII explainer of the whole plugin — make, gates, roles, tasks, plan, specs.</p></div>
     </div>
   </section>
 
@@ -175,8 +177,8 @@
     <p class="sub">The cautions the evidence is clearest about — built in, not hidden.</p>
     <div class="guards">
       <div class="gd reveal"><div class="n">01 · integrity</div><p>The tester owns &amp; <b>locks</b> tests; the implementer can't edit them. Tampering is refused.</p></div>
-      <div class="gd reveal"><div class="n">02 · spec gate</div><p>Green ≠ done. Sign‑off needs a <b>spec‑conformance</b> attestation.</p></div>
-      <div class="gd reveal"><div class="n">03 · independence</div><p>Reviewer runs on a <b>different model</b> than the implementer.</p></div>
+      <div class="gd reveal"><div class="n">02 · spec gate</div><p>Green ≠ done. Sign‑off needs a <b>spec‑conformance</b> attestation — and a <b>locked spec</b> can't be quietly relaxed.</p></div>
+      <div class="gd reveal"><div class="n">03 · independence</div><p>Reviewer runs on a <b>different model</b> than the implementer — optionally an <b>N‑critic panel</b>.</p></div>
       <div class="gd reveal"><div class="n">04 · cross‑vendor</div><p>Claude builds; if <b>Codex</b> is installed, <b>OpenAI</b> reviews — two vendors checking each other.</p></div>
     </div>
   </section>
