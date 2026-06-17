@@ -56,6 +56,16 @@ ceremony only**; the four sign-off gates are byte-for-byte identical in both.
 
 Multi-agent fan-out is overkill for small/coupled work — `quick` is the honest answer, not abandoning the gates.
 
+**Auto-routing (the default).** You (the orchestrator) choose the tier from the task description
+*before* the run — a routing decision made once, up front, recorded for audit, and not re-litigated
+mid-run. Record it: `init --tier <quick|full> --route auto --reason "<why>"` (a bare `--tier auto`
+falls back to `full` so auto can never silently under-staff). **Escalate to `full`** when the task
+touches shared interfaces / state machines / auth / billing / migrations / runtime behavior, spans
+multiple modules, changes a durable abstraction, carries rollback or compatibility risk, enters an
+unfamiliar domain, or has unclear acceptance criteria; otherwise `quick`. Bias to `full` when
+uncertain, and **ask the user** before a routing choice that materially increases cost/time. Routing
+only ever changes staffing — it can never lower a gate.
+
 ## Phases (strict — do not merge or skip)
 
 - **P0 · Assemble the brief.** *Before any fan-out*, compile ONE canonical brief: the relevant
@@ -65,7 +75,10 @@ Multi-agent fan-out is overkill for small/coupled work — `quick` is the honest
 - **P1 · Research + architecture.** `domain-researcher` (citing external facts against official
   docs) + `system-architect` produce the approach and an ADR. Design tasks add `ux-designer`.
   **Decide the validation policy here:** run `orchestrator detect`, set `tdd`/`adapt`/`manual`,
-  ask the user if unclear. **Freeze the spec here too:** once acceptance criteria are settled, run
+  ask the user if unclear. **Use the team's OWN test command** — this workflow runs in any repo,
+  so validate with whatever the project already uses (detect covers Node/pnpm, Python, Go, Rust,
+  JVM, .NET, Elixir, Make/just/Task, …). `detect` only *suggests*; confirm it matches what they
+  actually run (CI / CONTRIBUTING / Makefile) and record it verbatim with `--cmd`. Never assume `npm`. **Freeze the spec here too:** once acceptance criteria are settled, run
   `orchestrator spec-lock --paths "…"` to lock them — the task's `issue.md` for a `spec: task`
   item, or the `.claude/skills/<name>/` files for a `spec: skill:<name>` item. A locked spec that
   is changed by sign-off is refused, exactly like the test lock — you can't relax the criteria to

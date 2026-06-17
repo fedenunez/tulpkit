@@ -63,6 +63,7 @@ function testOrchestrator(): void {
     o(d, "tests-lock", "--paths", "tests");
     const test = o(d, "test");
     check("happy: test run is green", test.code === 0 && /GREEN/.test(test.out));
+    o(d, "review", "--issues", "0", "--resolved", "true", "--by", "code-reviewer");
     const so = o(d, "signoff", "--by", "code-reviewer",
       "--check", "spec_conformance=meets the acceptance criteria",
       "--check", "correctness=verified vs source",
@@ -136,6 +137,7 @@ function testOrchestrator(): void {
     o(d, "spec-lock", "--paths", "spec.md");
     check("spec-verify clean right after lock", o(d, "spec-verify").code === 0);
     o(d, "test");
+    o(d, "review", "--issues", "0", "--resolved", "true", "--by", "r");
     const so = o(d, "signoff", "--by", "r", "--check", "spec_conformance=meets", "--check", "a=aaaa", "--check", "b=bbbb", "--check", "c=cccc");
     check("signs off with locked spec intact", so.code === 0 && /SIGNED OFF/.test(so.out), so.out.trim());
     rm(d);
@@ -164,6 +166,7 @@ function testOrchestrator(): void {
     o(d, "init", "--task", "x");
     o(d, "validation", "--mode", "adapt", "--cmd", "true");
     o(d, "test");
+    o(d, "review", "--issues", "0", "--resolved", "true", "--by", "r");
     const so = o(d, "signoff", "--by", "r", "--check", "spec_conformance=meets", "--check", "a=aaaa", "--check", "b=bbbb", "--check", "c=cccc");
     check("no spec lock → free-text attestation still signs off", so.code === 0 && /SIGNED OFF/.test(so.out), so.out.trim());
     rm(d);
@@ -416,8 +419,13 @@ function testHook(): void {
 function testCodex(): void {
   section("codex — detect contract");
   const r = run(CODEX, ["detect"]);
+  // Robust to trailing runtime/tsx warnings: scan from the end for the last JSON-parseable line.
   let parsed: any = null;
-  try { parsed = JSON.parse(r.out.trim().split("\n").pop() || ""); } catch { /* */ }
+  for (const line of r.out.trim().split("\n").reverse()) {
+    const sLine = line.trim();
+    if (!sLine.startsWith("{")) continue;
+    try { parsed = JSON.parse(sLine); break; } catch { /* keep looking */ }
+  }
   check("detect emits a JSON verdict with an `available` boolean", parsed && typeof parsed.available === "boolean", r.out.trim());
   check("detect exit code matches availability", (r.code === 0) === (parsed?.available === true));
   console.log(`    (codex ${parsed?.available ? "IS" : "is NOT"} available here: ${parsed?.reason})`);
@@ -462,6 +470,156 @@ function testStructure(): void {
     contains("skills/orchestrated-delivery/SKILL.md", /knowledge game,\s+not a brute-force\s+game/i));
   check("grounding philosophy is in the composed brief template",
     contains("skills/orchestrated-delivery/prompt-template.md", /knowledge game,\s+not a brute-force\s+game/i));
+
+  // finding 4: the implementer must not be told to extend tests (tester owns them)
+  const implTxt = fs.readFileSync(path.join(REPO, "agents", "implementer.md"), "utf8");
+  check("implementer.md does not tell the implementer to extend tests (finding 4)",
+    !/extend tests\b/i.test(implTxt) && /ask the tester to write them/i.test(implTxt));
+  // finding 5: CLAUDE.md documents the executable test gate
+  check("CLAUDE.md documents `npm test` as a verification gate (finding 5)",
+    contains("CLAUDE.md", /npm test/) && !contains("CLAUDE.md", /no test suite for the plugin/i));
+}
+
+// ---- locks are confined to the repo root (codex cross-vendor review) -------
+function testContainment(): void {
+  section("orchestrator — tests-lock is confined to the repo root (codex review)");
+  const d = tmp();
+  fs.writeFileSync(path.join(d, "in.test.js"), "x");
+  const outside = path.join(os.tmpdir(), `tulp-outside-${path.basename(d)}.test.js`);
+  fs.writeFileSync(outside, "x");
+  o(d, "init", "--task", "x");
+  check("a file INSIDE the root still locks", /locked 1 test file/.test(o(d, "tests-lock", "--paths", "in.test.js").out));
+  const abs = o(d, "tests-lock", "--paths", outside);
+  check("an absolute path OUTSIDE the root is refused", abs.code === 1 && /no test files matched/.test(abs.out), abs.out.trim());
+  const up = o(d, "tests-lock", "--paths", "../" + path.basename(outside));
+  check("a `../` escape outside the root is refused", up.code === 1 && /no test files matched/.test(up.out), up.out.trim());
+  try { fs.rmSync(outside); } catch { /* */ }
+  rm(d);
+}
+
+// ---- auto-routing: orchestrator decides the path up front, recorded for audit ----
+function testRouting(): void {
+  section("orchestrator — auto-routing decided up front & recorded");
+  {
+    const d = tmp();
+    const out = o(d, "init", "--task", "x", "--tier", "quick", "--route", "auto", "--reason", "localized doc change").out;
+    check("auto route announced at init", /AUTO-ROUTE: orchestrator selected quick — localized doc change/.test(out), out.trim());
+    const st = o(d, "status").out;
+    check("auto route + reason recorded in status", /route\s*:\s*auto — localized doc change/.test(st) && /\(auto-routed\)/.test(st), st);
+    rm(d);
+  }
+  {
+    const d = tmp();
+    const out = o(d, "init", "--task", "x", "--tier", "auto").out;
+    check("bare --tier auto falls back to full (never under-staffs)", /auto→full/.test(out) && /defaulted to full/.test(out), out.trim());
+    const st = o(d, "status").out;
+    check("auto-fallback run is full-staffed (P1/P3 present)", /P1:/.test(st) && /P3:/.test(st));
+    rm(d);
+  }
+  {
+    const d = tmp();
+    o(d, "init", "--task", "x", "--tier", "full"); // explicit, no routing
+    const st = o(d, "status").out;
+    check("explicit tier shows no auto-route line", !/route\s*:\s*auto/.test(st));
+    rm(d);
+  }
+}
+
+// ---- detection adapts to the team's existing tooling (any stack, not just npm) ----
+function testDetect(): void {
+  section("orchestrator — detect uses the repo's OWN tooling (not npm-specific)");
+  const detOut = (files: Record<string, string>): string => {
+    const d = tmp();
+    for (const [name, content] of Object.entries(files)) {
+      const p = path.join(d, name);
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      fs.writeFileSync(p, content);
+    }
+    const out = o(d, "detect").out;
+    rm(d);
+    return out;
+  };
+  check("pnpm repo → suggests `pnpm test` (honors the lockfile, not npm)",
+    /detected test command: pnpm test/.test(detOut({ "package.json": '{"scripts":{"test":"vitest"}}', "pnpm-lock.yaml": "" })));
+  check("yarn repo → suggests `yarn test`",
+    /detected test command: yarn test/.test(detOut({ "package.json": '{"scripts":{"test":"jest"}}', "yarn.lock": "" })));
+  check("plain npm repo → still `npm test`",
+    /detected test command: npm test/.test(detOut({ "package.json": '{"scripts":{"test":"node --test"}}' })));
+  check("go repo → `go test ./...`", /detected test command: go test/.test(detOut({ "go.mod": "module x\n" })));
+  check("rust repo → `cargo test`", /detected test command: cargo test/.test(detOut({ "Cargo.toml": "[package]\n" })));
+  check("maven repo → `mvn test`", /detected test command: mvn test/.test(detOut({ "pom.xml": "<project/>" })));
+  check("gradle repo → gradle test", /detected test command: .*gradle test/.test(detOut({ "build.gradle": "" })));
+  check("elixir repo → `mix test`", /detected test command: mix test/.test(detOut({ "mix.exs": "" })));
+  check("Makefile test target → `make test`", /detected test command: make test/.test(detOut({ "Makefile": "test:\n\techo ok\n" })));
+  check("unknown stack → tells the operator to ASK THE USER (never assumes a command)",
+    /ASK THE USER/.test(detOut({ "README.md": "hi" })));
+}
+
+// ---- review remediations (findings 1-3 from REVIEW.md) --------------------
+function testReviewRemediations(): void {
+  const okChecks = ["--check", "spec_conformance=meets the acceptance criteria",
+    "--check", "correctness=verified vs source", "--check", "coverage=edge cases included"];
+  // bring a run to GREEN + locked + spec-attested, lacking only the review
+  const ready = (d: string): void => {
+    fs.mkdirSync(path.join(d, "tests"));
+    fs.writeFileSync(path.join(d, "tests", "a.txt"), "x");
+    o(d, "init", "--task", "x");
+    o(d, "validation", "--mode", "adapt", "--cmd", "true");
+    o(d, "tests-lock", "--paths", "tests");
+    o(d, "test");
+  };
+
+  section("orchestrator — review is now mandatory at sign-off (finding 1)");
+  {
+    const d = tmp(); ready(d);
+    const so = o(d, "signoff", "--by", "r", ...okChecks);
+    check("refuses sign-off when NO review is recorded", so.code === 1 && /no review recorded/.test(so.out), so.out.trim());
+    rm(d);
+  }
+  {
+    const d = tmp(); ready(d);
+    o(d, "review", "--issues", "0", "--resolved", "false", "--by", "r"); // unresolved, 0 issues — the subtle hole
+    const so = o(d, "signoff", "--by", "r", ...okChecks);
+    check("refuses sign-off when the final review is unresolved (even with 0 issues)", so.code === 1 && /unresolved/.test(so.out), so.out.trim());
+    rm(d);
+  }
+  {
+    const d = tmp(); ready(d);
+    o(d, "review", "--issues", "0", "--resolved", "true", "--by", "r");
+    const so = o(d, "signoff", "--by", "r", ...okChecks);
+    check("signs off once a resolved review is recorded", so.code === 0 && /SIGNED OFF/.test(so.out), so.out.trim());
+    rm(d);
+  }
+
+  section("orchestrator — manual no longer skips test integrity (finding 3)");
+  {
+    const d = tmp();
+    fs.mkdirSync(path.join(d, "tests"));
+    const f = path.join(d, "tests", "a.txt");
+    fs.writeFileSync(f, "original");
+    o(d, "init", "--task", "x");
+    o(d, "tests-lock", "--paths", "tests");
+    o(d, "validation", "--mode", "manual", "--reason", "pure docs change with no executable behavior to test here");
+    fs.writeFileSync(f, "TAMPERED-AFTER-LOCK");
+    o(d, "review", "--issues", "0", "--resolved", "true", "--by", "r");
+    const so = o(d, "signoff", "--by", "r", "--check", "spec_conformance=meets", "--check", "a=aaaa", "--check", "b=bbbb", "--check", "c=cccc");
+    check("manual sign-off refused when a locked test was tampered", so.code === 1 && /TEST INTEGRITY VIOLATION/.test(so.out), so.out.trim());
+    rm(d);
+  }
+
+  section("orchestrator — tests-lock globs resolve WITHOUT a shell (finding 2)");
+  {
+    const d = tmp();
+    fs.writeFileSync(path.join(d, "real.test.js"), "x");
+    o(d, "init", "--task", "x");
+    const sentinel = path.join(d, "PWNED");
+    // a redirect payload (no spaces, survives token split) would create the sentinel under the old `bash -lc`
+    o(d, "tests-lock", "--paths", `nope>${sentinel}`);
+    check("shell metacharacters in --paths do not execute", !fs.existsSync(sentinel));
+    const r = o(d, "tests-lock", "--paths", "*.test.js");
+    check("a real glob still resolves to the matching file", /real\.test\.js/.test(r.out) && /locked 1 test file/.test(r.out), r.out.trim());
+    rm(d);
+  }
 }
 
 // ---- run ------------------------------------------------------------------
@@ -470,6 +628,10 @@ testStructure();
 testOrchestrator();
 testTasks();
 testTasksNesting();
+testContainment();
+testRouting();
+testDetect();
+testReviewRemediations();
 testHook();
 testCodex();
 

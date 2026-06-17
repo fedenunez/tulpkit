@@ -45,6 +45,7 @@ type SpecLock = { at: string; by: string; source: "task" | "skill"; files: Recor
 type RunState = {
   task: string;
   tier: "quick" | "full";
+  routing?: { mode: "auto" | "explicit"; reason: string | null; by: string | null };
   started_at: string;
   status: "in_progress" | "complete" | "aborted";
   phases: Phase[];
@@ -121,7 +122,53 @@ function mustState(): RunState {
 function sha256(file: string): string {
   return createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
-/** expand --paths "a b,c tests/**" into an actual file list (globs via shell `ls`/find fallback) */
+/** is an absolute path inside the repo root? Containment: `--paths` must never lock/hash files
+ *  outside the workspace (a deterministic gate over a known tree). */
+function isInsideRoot(abs: string): boolean {
+  const rel = path.relative(ROOT, abs);
+  return rel === "" ? true : !rel.startsWith("..") && !path.isAbsolute(rel);
+}
+/** translate a shell-style glob (* ? **) to an anchored RegExp over a "/"-joined relative path */
+function globToRegExp(glob: string): RegExp {
+  let re = "";
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (c === "*") {
+      if (glob[i + 1] === "*") { re += ".*"; i++; if (glob[i + 1] === "/") i++; }
+      else re += "[^/]*";
+    } else if (c === "?") {
+      re += "[^/]";
+    } else {
+      re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp("^" + re + "$");
+}
+/** expand a glob token to existing files by walking the filesystem directly — NO shell, so a
+ *  `--paths` token can never be shell-interpreted (this is a deterministic gate script). */
+function expandGlob(glob: string): string[] {
+  const baseParts: string[] = [];
+  for (const seg of glob.split("/")) { if (/[*?[\]]/.test(seg)) break; baseParts.push(seg); }
+  const base = baseParts.join("/") || ".";
+  if (!isInsideRoot(path.resolve(base))) return []; // containment: never scan outside the repo root
+  if (!fs.existsSync(base)) return [];
+  const re = globToRegExp(glob);
+  const out: string[] = [];
+  const walk = (dir: string): void => {
+    let entries: fs.Dirent[];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (e.name === "node_modules" || e.name === ".git") continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (re.test(full)) out.push(full);
+    }
+  };
+  if (fs.statSync(base).isDirectory()) walk(base);
+  else if (re.test(base)) out.push(base);
+  return out;
+}
+/** expand --paths "a b,c tests/**" into an actual file list (globs resolved WITHOUT a shell) */
 function resolveTestPaths(spec: string): string[] {
   const out = new Set<string>();
   for (const tok of spec.split(/[,\s]+/).filter(Boolean)) {
@@ -132,34 +179,58 @@ function resolveTestPaths(spec: string): string[] {
         (r.stdout || "").split("\n").filter(Boolean).forEach((p) => out.add(p));
       } else out.add(tok);
     } else {
-      // treat as a glob
-      const r = spawnSync("bash", ["-lc", `ls -1 ${tok} 2>/dev/null`], { encoding: "utf8" });
-      (r.stdout || "").split("\n").filter(Boolean).forEach((p) => { if (fs.existsSync(p)) out.add(p); });
+      // treat as a glob — resolved WITHOUT a shell, so `--paths` can never be shell-interpreted.
+      for (const p of expandGlob(tok)) out.add(p);
     }
   }
-  return [...out];
+  // Containment: drop anything that resolves outside the repo root (absolute paths, `../` escapes),
+  // so a lock can only ever cover files within the workspace.
+  return [...out].filter((p) => isInsideRoot(path.resolve(p)));
 }
 
-/** best-effort detection of the project's test command + whether tests already exist */
+/** Best-effort detection of the project's EXISTING test command — a HINT for the operator to
+ *  confirm, never a mandate. This workflow targets ANY repo, not just Node: the authoritative
+ *  command is whatever the team already runs. `detect` only suggests it, `validation --cmd
+ *  "<command>"` records it verbatim, and the gate runs exactly that. Unknown stacks fall back to
+ *  asking the user. Covers the common ecosystems + task runners; extend as needed. */
 function detectValidation(root: string): { command: string | null; hasTests: boolean; why: string } {
   const has = (p: string) => fs.existsSync(path.join(root, p));
-  const hasTests = has("tests") || has("test") || has("__tests__") || has("spec") || fs.existsSync(path.join(root, "src"));
+  const slurp = (p: string) => { try { return fs.readFileSync(path.join(root, p), "utf8"); } catch { return ""; } };
+  const anyExt = (ext: string) => { try { return fs.readdirSync(root).some((f) => f.endsWith(ext)); } catch { return false; } };
+  // `src/` is source, NOT tests — counting it would wrongly suggest `adapt` for a source-only repo.
+  const hasTests = ["tests", "test", "__tests__", "spec", "Tests"].some(has);
   let command: string | null = null;
   let why = "no recognizable test setup";
+  const set = (c: string, w: string) => { if (!command) { command = c; why = w; } };
   try {
+    // Node — honor the package manager the repo actually pins (lockfile), only if a test script exists.
     if (has("package.json")) {
-      const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-      const t = pkg.scripts?.test as string | undefined;
-      if (t && !/no test specified/i.test(t)) { command = "npm test"; why = "package.json scripts.test"; }
+      const t = (JSON.parse(slurp("package.json") || "{}").scripts?.test) as string | undefined;
+      if (t && !/no test specified/i.test(t)) {
+        const pm = has("pnpm-lock.yaml") ? "pnpm" : has("yarn.lock") ? "yarn" : has("bun.lockb") ? "bun run" : "npm";
+        set(`${pm} test`, `package.json scripts.test (${pm.split(" ")[0]})`);
+      }
     }
-    if (!command && (has("pyproject.toml") || has("pytest.ini") || has("tox.ini") || has("setup.cfg"))) { command = "pytest"; why = "python test config"; }
-    if (!command && has("go.mod")) { command = "go test ./..."; why = "go.mod"; }
-    if (!command && has("Cargo.toml")) { command = "cargo test"; why = "Cargo.toml"; }
-    if (!command && has("Gemfile") && has("spec")) { command = "bundle exec rspec"; why = "Gemfile + spec/"; }
-    if (!command && has("Makefile")) {
-      const mk = fs.readFileSync(path.join(root, "Makefile"), "utf8");
-      if (/^test:/m.test(mk)) { command = "make test"; why = "Makefile test target"; }
+    // Task runners are usually the team's canonical entrypoint — prefer them over a raw tool guess.
+    if (has("Makefile") && /^test:/m.test(slurp("Makefile"))) set("make test", "Makefile test target");
+    if ((has("justfile") || has("Justfile")) && /^test:/m.test(slurp("justfile") || slurp("Justfile"))) set("just test", "justfile test recipe");
+    if (has("Taskfile.yml") && /^\s{2,}test:/m.test(slurp("Taskfile.yml"))) set("task test", "Taskfile test task");
+    // Language / build ecosystems.
+    if (has("pyproject.toml") || has("pytest.ini") || has("tox.ini") || has("setup.cfg")) set("pytest", "python test config");
+    if (has("go.mod")) set("go test ./...", "go.mod");
+    if (has("Cargo.toml")) set("cargo test", "Cargo.toml");
+    if (has("Gemfile")) set(has("spec") ? "bundle exec rspec" : "bundle exec rake test", "Gemfile");
+    if (has("build.gradle") || has("build.gradle.kts") || has("settings.gradle") || has("settings.gradle.kts")) set(has("gradlew") ? "./gradlew test" : "gradle test", "Gradle build");
+    if (has("pom.xml")) set("mvn test", "Maven pom.xml");
+    if (has("mix.exs")) set("mix test", "Elixir mix.exs");
+    if (has("Package.swift")) set("swift test", "Swift package");
+    if (has("composer.json")) {
+      const cj = JSON.parse(slurp("composer.json") || "{}");
+      if (cj.scripts?.test) set("composer test", "composer.json scripts.test");
+      else if (has("phpunit.xml") || has("phpunit.xml.dist")) set("vendor/bin/phpunit", "phpunit config");
     }
+    if (has("MODULE.bazel") || has("WORKSPACE") || has("WORKSPACE.bazel")) set("bazel test //...", "Bazel workspace");
+    if (anyExt(".sln") || anyExt(".csproj") || anyExt(".fsproj")) set("dotnet test", ".NET project");
   } catch { /* ignore */ }
   return { command, hasTests, why };
 }
@@ -168,10 +239,18 @@ function detectValidation(root: string): { command: string | null; hasTests: boo
 
 function cmdInit(flags: Record<string, string>): void {
   const task = flags.task ?? "(unspecified task)";
+  // The tier (staffing) is RESOLVED by the orchestrator before the run starts. `auto` means the
+  // orchestrator chose the path from the task description — a routing decision made once, up front,
+  // and recorded for audit. It must still pass the concrete tier it picked; a bare `--tier auto`
+  // falls back to `full` (the safe default) so auto can never silently under-staff a run.
+  const routeAuto = flags.route === "auto" || flags.tier === "auto";
   const tier: RunState["tier"] = flags.tier === "quick" ? "quick" : "full";
+  const routeReason = flags.reason && flags.reason !== "true" ? flags.reason : null;
   const phases = (tier === "quick" ? QUICK_PHASES : DEFAULT_PHASES).map((p) => ({ ...p }));
   const state: RunState = {
-    task, tier, started_at: now(), status: "in_progress",
+    task, tier,
+    routing: { mode: routeAuto ? "auto" : "explicit", reason: routeReason, by: flags.by ?? (routeAuto ? "orchestrator" : null) },
+    started_at: now(), status: "in_progress",
     phases,
     validation: {
       mode: (flags["test-mode"] as Validation["mode"]) ?? null,
@@ -185,7 +264,9 @@ function cmdInit(flags: Record<string, string>): void {
   };
   state.phases[0].status = "active";
   write(state);
-  console.log(`▶ run started — status=in_progress, tier=${tier}\n  task: ${task}`);
+  console.log(`▶ run started — status=in_progress, tier=${routeAuto ? `auto→${tier}` : tier}\n  task: ${task}`);
+  if (routeAuto) console.log(`  AUTO-ROUTE: orchestrator selected ${tier}${routeReason ? ` — ${routeReason}` : ' (no reason recorded — add --reason "…")'}.`);
+  if (flags.tier === "auto") console.log("  (bare --tier auto → defaulted to full; pass the resolved --tier quick|full you chose for accurate staffing.)");
   console.log("  Principle: a knowledge game, not a brute-force game — ground every action in facts (code/docs/project/web),");
   console.log("  isolate problems to their real root cause, never guess, and record learnings. State this in the brief to every persona.");
   if (tier === "quick")
@@ -203,6 +284,7 @@ function cmdDetect(): void {
     console.log(`detected test command: ${d.command}   (${d.why})`);
     console.log(`existing tests: ${d.hasTests ? "yes" : "none found"}  → suggested mode: ${suggest}`);
     console.log(`record it:  orchestrator validation --mode ${suggest} --cmd "${d.command}" --by detected`);
+    console.log(`⚠ this is a GUESS — confirm it matches what the team actually runs (CI config / CONTRIBUTING / Makefile). If not, record the real command via --cmd.`);
   } else {
     console.log(`no test setup detected (${d.why}).`);
     console.log("ASK THE USER how to validate, then record:");
@@ -402,8 +484,10 @@ function cmdSignoff(flags: Record<string, string>, checks: Record<string, string
     if (!checks["tests"]) checks["tests"] = `${v.mode}: \`${last.cmd}\` exit 0 (${s.test_runs.length} run(s))`;
   }
 
-  // Gate 2: TEST INTEGRITY — the gate must not have been gamed.
-  if (!manualReason) {
+  // Gate 2: TEST INTEGRITY — the gate must not have been gamed. Verified whenever a lock exists,
+  // REGARDLESS of validation mode: a `manual` exception must never become a way to dodge a
+  // tampered locked test, since the lock is the trust anchor for the whole validation gate.
+  if (s.test_lock) {
     const integ = verifyIntegrity(s);
     if (!integ.ok) {
       console.error("✗ sign-off refused: TEST INTEGRITY VIOLATION (the validation gate may have been gamed).");
@@ -412,7 +496,7 @@ function cmdSignoff(flags: Record<string, string>, checks: Record<string, string
       console.error("   Green tests only count if the tester's locked tests are intact. Tester must re-author + re-lock if the change is legitimate.");
       process.exit(1);
     }
-    if (s.test_lock) checks["test_integrity"] = `locked ${Object.keys(s.test_lock.files).length} test file(s); intact at sign-off`;
+    checks["test_integrity"] = `locked ${Object.keys(s.test_lock.files).length} test file(s); intact at sign-off`;
   }
 
   // Gate 3: SPEC-CONFORMANCE attestation — not just "tests pass".
@@ -456,8 +540,19 @@ function cmdSignoff(flags: Record<string, string>, checks: Record<string, string
     console.error(`✗ sign-off refused: auditable checklist needs ≥ ${MIN_CHECKLIST_ITEMS} non-empty items, got ${nonEmpty.length}.`);
     process.exit(1);
   }
-  const open = openReviewIssues(s);
-  if (open > 0) { console.error(`✗ sign-off refused: ${open} unresolved review issue(s).`); process.exit(1); }
+  // Gate 4b: a review must actually have happened AND resolved. `/tulpkit:make` promises the
+  // reviewer signs off, so make it mechanical: no review on record (or an unresolved final
+  // review) means the run is NOT signed off, even with everything else green. This also closes
+  // the subtle hole where a review with resolved=false but issues_found=0 used to slip through.
+  const lastReview = s.review_iterations[s.review_iterations.length - 1];
+  if (!lastReview) {
+    console.error("✗ sign-off refused: no review recorded. The reviewer (≠ implementer; Codex if available) must review, recorded via `orchestrator review --resolved true …`, before sign-off.");
+    process.exit(1);
+  }
+  if (!lastReview.resolved) {
+    console.error(`✗ sign-off refused: the final review is unresolved (${lastReview.issues_found} open issue(s)). Fix every issue, then re-record with \`orchestrator review --resolved true\`.`);
+    process.exit(1);
+  }
 
   s.phases.forEach((p) => (p.status = "done"));
   s.sign_off = { approved_by: flags.by ?? "code-reviewer", at: now(), checklist: Object.fromEntries(nonEmpty) };
@@ -474,7 +569,8 @@ function cmdStatus(): void {
   const v = s.validation;
   const integ = s.test_lock ? verifyIntegrity(s) : null;
   console.log(`task        : ${s.task}`);
-  console.log(`tier        : ${s.tier ?? "full"}`);
+  console.log(`tier        : ${s.tier ?? "full"}${s.routing?.mode === "auto" ? "  (auto-routed)" : ""}`);
+  if (s.routing?.mode === "auto") console.log(`route       : auto — ${s.routing.reason ?? "(no reason recorded)"}`);
   console.log(`status      : ${s.status}`);
   console.log(`phases      : ${s.phases.map((p) => `${p.id}:${p.status}`).join("  ")}`);
   console.log(`validation  : ${v.mode ? `${v.mode}${v.command ? ` (${v.command})` : ""}${v.reason ? ` — ${v.reason}` : ""}` : "NOT DECIDED — detect or ask the user"}`);

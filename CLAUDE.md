@@ -17,15 +17,19 @@ repo means editing those primitives. The plugin ships two capabilities: **orches
 ## Commands
 
 ```bash
-npm run typecheck        # tsc --noEmit — the only real "build" check; run after editing any script
+npm run typecheck        # tsc --noEmit — static gate; run after editing any script
+npm test                 # tsx scripts/selftest.ts — executable gate: exercises all 4 scripts,
+                         # the Stop-hook contract, the sign-off gates, and the plugin structure
 npx tsx scripts/orchestrator.ts status     # inspect the active orchestration run
 npx tsx scripts/orchestrator.ts <cmd> ...  # drive the state machine (see below)
-npx tsx scripts/tasks.ts <new|move|remove|show|list|states> ...
+npx tsx scripts/tasks.ts <new|move|remove|show|list|states|tree> ...
 npx tsx scripts/codex.ts detect [--probe]  # is a cross-vendor Codex reviewer available?
 ```
 
-There is no test suite for the plugin's own scripts. `npm run typecheck` is the verification gate
-here. After changing any `agents/`, `hooks/`, or skill files, the consuming session must restart or
+**Both `npm run typecheck` and `npm test` are the verification gates** — run both after changing any
+script. `selftest.ts` is the plugin practicing what it preaches: deterministic, dependency-free
+assertions over the four scripts. Add a case to it for every gate/behavior you change. After
+changing any `agents/`, `hooks/`, or skill files, the consuming session must restart or
 `/reload-plugins` for changes to take effect.
 
 ## Architecture — orchestrated delivery
@@ -39,7 +43,12 @@ report; the orchestrator records.** This keeps writes single-threaded and avoids
   form the lifecycle: `init → detect → validation → phase → tests-lock → test → review → signoff`
   (`status`/`abort` are out-of-band). `init --tier full` uses `DEFAULT_PHASES` (P0–P4); `--tier
   quick` uses `QUICK_PHASES` (P0/P2/P4, the 3 gate-critical roles only). **Tier changes staffing,
-  never the four sign-off gates** — both tiers enforce the identical floor.
+  never the four sign-off gates** — both tiers enforce the identical floor. The orchestrator routes
+  `auto` (the default): it picks the tier from the task description up front and records the decision
+  (`init --tier <quick|full> --route auto --reason "…"`, stored in `routing`); a bare `--tier auto`
+  safely falls back to `full`. Validation is command-agnostic — `detectValidation` suggests the
+  team's existing test command across many ecosystems (a hint to confirm), and `validation --cmd`
+  records whatever they actually run.
 - **`scripts/enforce-signoff.ts`** is the `Stop` hook (wired in `hooks/hooks.json`). On every Stop
   it reads `run-state.json`; while a run is active and unsigned it returns
   `{"decision":"block", reason}` to force continuation, with a `MAX_BLOCKS = 8` safety valve. It

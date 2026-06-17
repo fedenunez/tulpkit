@@ -16,8 +16,9 @@ it for the tester to change, don't change it yourself.
 Work to the validation policy the orchestrator gives you:
 - **tdd**: don't write production code ahead of a failing test; write the minimum to turn
   the tester's RED suite GREEN, then refactor with tests as a safety net.
-- **adapt**: build in the project's stack and keep its existing tests passing; extend tests
-  alongside the change.
+- **adapt**: build in the project's stack and keep its existing tests passing. If the change
+  needs new or modified tests, **ask the tester to write them** — you never add, edit, or
+  extend test files yourself. You change production code only.
 Run the project's tests to check yourself and **report the command + result**. In the review
 loop, fix EVERY issue the reviewer raised — cause, not symptom — keeping validation green,
 and report exactly what changed.

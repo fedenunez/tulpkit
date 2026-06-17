@@ -15,15 +15,22 @@ allowed-tools: Bash, Read, Edit, Write, Grep, Glob, Agent, Skill, WebSearch, Web
   (read it as part of the brief, and freeze its files at spec-lock).
 - **Not found** → treat "$ARGUMENTS" as a new ad-hoc task description.
 
-**Pick the tier.** If "$ARGUMENTS" begins with the word `quick` or `full`, that's the tier (strip
-it from the spec). Else, if the resolved task carries a `tier:` frontmatter hint (set by
-`/tulpkit:plan`), use it. Otherwise choose: **`quick`** for a small, single-file, tightly-coupled
-change (runs tester + implementer + reviewer only); **`full`** (default) for anything non-trivial
-(adds research + architecture). The four sign-off gates are identical either way — tier changes
-staffing, never the floor. When in doubt, ask the user or default to `full`.
+**Route the run (auto by default).** Decide the staffing path *before* starting — your call as
+orchestrator, made once from the task description and recorded:
+- **Explicit override:** if "$ARGUMENTS" begins with `quick` or `full`, use that (strip it from the spec).
+- **Task hint:** else if the resolved task carries a `tier:` frontmatter hint (set by `/tulpkit:plan`), use it.
+- **Auto (default):** otherwise choose from the task. Pick **`quick`** for a small, localized,
+  tightly-coupled change with no shared-contract or architecture impact (tester + implementer +
+  reviewer only). Pick **`full`** for anything non-trivial — new/changed interfaces, state machines,
+  auth, billing, migrations, multi-module or high-blast-radius work, unfamiliar domains, or unclear
+  acceptance criteria (adds research + architecture). Bias to `full` when uncertain; ask the user
+  before a routing choice that materially increases cost/time.
+
+The four sign-off gates are identical either way — routing changes staffing, never the floor.
+Announce the chosen route and a one-line reason before fanning out.
 
 **Then orchestrate** — load the `orchestrated-delivery` skill and follow it exactly:
-1. Boot: `npx tsx "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator.ts" init --task "<the spec>" --tier <quick|full>`.
+1. Boot with the route you chose: `npx tsx "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator.ts" init --task "<the spec>" --tier <quick|full> --route auto --reason "<why this path>"` (drop `--route auto` only for an explicit `quick`/`full` override or task hint).
 2. Clarify the stack if unclear; compose the phased multi-agent brief; fan out by phase. Once the
    acceptance criteria are agreed (end of P0/P1), **freeze the spec**:
    `npx tsx "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator.ts" spec-lock --paths "<the issue.md and/or the skill-spec files>"`
