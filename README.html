@@ -101,6 +101,17 @@
   footer b{color:var(--good-deep)}
   .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
   .reveal.in{opacity:1;transform:none}
+  /* prose / reference sections (ported from the old README.md) */
+  .prose{max-width:74ch;margin:0 auto;color:var(--ink-mid);font-size:14.5px}
+  .prose h3{font-family:var(--serif);font-size:19px;color:var(--ink);margin:24px 0 6px;font-weight:600}
+  .prose p{margin:0 0 12px}
+  .prose ul{margin:0 0 12px;padding-left:20px}
+  .prose li{margin:0 0 9px}
+  .prose code,.prose b code{font-family:var(--mono);font-size:12.5px;background:var(--struct-soft);padding:1px 5px;border-radius:4px;color:var(--struct)}
+  .code-block{background:#11151b;color:#e8eaed;border-radius:12px;padding:15px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.75;overflow-x:auto;white-space:pre;margin:0 0 14px}
+  table.ref{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 14px}
+  table.ref th,table.ref td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.ref th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);font-weight:600}
   :focus-visible{outline:2px solid var(--struct);outline-offset:3px;border-radius:4px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal,.pl .node{opacity:1;transform:none}html{scroll-behavior:auto}}
 </style>
@@ -108,7 +119,7 @@
 <body>
 <header class="top"><div class="wrap row">
   <span><b>tulpkit</b></span>
-  <nav><a href="#how">how</a><a href="#why">why</a><a href="evidence.html">evidence</a><a class="cta" href="research.html">full analysis →</a></nav>
+  <nav><a href="#how">how</a><a href="#why">why</a><a href="#install">install</a><a href="evidence.html">evidence</a><a class="cta" href="research.html">full analysis →</a></nav>
 </div></header>
 
 <main>
@@ -220,6 +231,110 @@
         <text x="900" y="112" text-anchor="middle" font-size="11" fill="var(--warn)">off</text>
       </g>
     </svg>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="reveal">
+    <p class="sec-h">Install &amp; setup</p>
+    <h2>Drop it into any repo</h2>
+    <div class="prose">
+      <p>It's a normal plugin directory (<code>.claude-plugin/plugin.json</code> + components at root). The scripts run with <code>npx tsx</code>, so the only requirement is Node (tsx is fetched on first run, or <code>npm i -D tsx</code> for speed). Restart or <code>/reload-plugins</code> after changing agents or hooks.</p>
+      <div class="code-block"># load locally for a session
+claude --plugin-dir /path/to/tulpkit
+# or install via the bundled marketplace (the repo is its own one-entry catalog):
+/plugin marketplace add /path/to/tulpkit      # or:  owner/repo  for GitHub
+/plugin validate .                             # sanity-check plugin.json + marketplace.json
+/plugin install tulpkit@fedenunez              # &lt;plugin&gt;@&lt;marketplace&gt;</div>
+      <h3>Naming</h3>
+      <table class="ref">
+        <tr><th>Thing</th><th>Name</th><th>Where it's set</th><th>How you use it</th></tr>
+        <tr><td><b>Marketplace</b> (the catalog)</td><td><code>fedenunez</code></td><td><code>.claude-plugin/marketplace.json</code> → <code>name</code></td><td>the part after <code>@</code> when installing; rename to your org/team</td></tr>
+        <tr><td><b>Plugin</b> (the tool)</td><td><code>tulpkit</code></td><td><code>plugin.json</code> → <code>name</code>, and the marketplace entry</td><td>what you install, and the command <b>namespace</b></td></tr>
+        <tr><td><b>Source</b> (where files live)</td><td><code>./</code></td><td>marketplace entry → <code>source</code></td><td>a local <code>./path</code> or <code>owner/repo</code></td></tr>
+      </table>
+      <p>So you install <code>tulpkit</code> <em>from</em> the <code>fedenunez</code> catalog → <code>tulpkit@fedenunez</code>, and its commands are namespaced under the plugin name: <code>/tulpkit:make</code> (or plain <code>/make</code> when there's no collision). Add more plugins to <code>fedenunez</code> later by appending entries to the <code>plugins</code> array.</p>
+      <h3>Project memory</h3>
+      <p>Plugins don't auto-load <code>CLAUDE.md</code>, so copy <code>examples/CLAUDE.md</code> and <code>examples/LEARNINGS.md</code> into your repo root. They wire the read-before / append-after learnings loop and point Claude at the plugin's commands and skills.</p>
+    </div>
+  </section>
+
+  <!-- TASKS SCHEMA -->
+  <section class="reveal">
+    <p class="sec-h">Tasks system</p>
+    <h2>Git-backed, folder-based, nestable</h2>
+    <div class="prose">
+      <p>Run at any <code>tasks/</code> root — repo root for cross-cutting work, a subproject for scoped work (<code>--root</code>).</p>
+      <div class="code-block">tasks/list/{type}-{id}-{slug}/   issue.md [attachments]
+tasks/by-state/{state}/{folder}  ->  ../../list/{folder}   (relative symlink)</div>
+      <p><code>type</code> = issue · task · feature (bug = issue + <code>kind: bug</code>) · <code>state</code> = proposed · pending · inprogress · done · rft · rejected. One symlink per task = its state; <code>issue.md</code> frontmatter mirrors it. <b>Nesting</b> is a logical tree via <code>parent</code>/<code>order</code> frontmatter — folders stay flat, so the id/symlink invariants are untouched, and a plan is just the subtree under a root task.</p>
+      <div class="code-block">npx tsx scripts/tasks.ts new  --as task --title "Add page" [--parent 3 --order 1] [--root packages/web]
+npx tsx scripts/tasks.ts move --task 7 --to inprogress
+npx tsx scripts/tasks.ts tree [--task 3]            # nested backlog
+npx tsx scripts/tasks.ts remove --task 3 [--cascade]</div>
+      <p>Full schema: the <code>tasks</code> skill. Commit the <code>list/</code> folder and the <code>by-state/</code> symlink together.</p>
+    </div>
+  </section>
+
+  <!-- HOW ORCHESTRATION WORKS -->
+  <section class="reveal">
+    <p class="sec-h">Under the hood</p>
+    <h2>How orchestration works</h2>
+    <div class="prose">
+      <p>The <b>main-session orchestrator owns the state machine</b> (<code>scripts/orchestrator.ts</code>): <code>init → detect → validation → phase → tests-lock → spec-lock → test → review → signoff</code>. Subagents (in <code>agents/</code>) do the work and <b>report</b>; the orchestrator records. This keeps writes single-threaded and avoids relying on <code>${CLAUDE_PLUGIN_ROOT}</code> inside subagent shells.</p>
+      <p>Four hard exit gates, all deterministic:</p>
+      <ul>
+        <li><b>Validation, adapted to the project.</b> <code>detect</code> inspects the repo; the policy is <code>tdd</code> (test-first; greenfield default), <code>adapt</code> (existing setup), or <code>manual</code> (recorded exception). For tdd/adapt the CLI <em>runs the real test command and checks exit 0</em>. <code>manual</code> is fenced: refused when a runner is detectable, declared up front, and unavailable once a green run exists — so it can't dodge the Stop hook.</li>
+        <li><b>Test integrity.</b> The tester locks its tests (<code>tests-lock</code>); if the implementer weakened or deleted them, sign-off is refused — capable models game gates they can edit.</li>
+        <li><b>Spec-conformance.</b> Sign-off requires a <code>spec_conformance</code> attestation; when the spec is frozen (<code>spec-lock</code>), the locked acceptance criteria must also be intact.</li>
+        <li><b>Auditable sign-off.</b> Checklist with ≥ 4 non-empty items and zero open review issues (optionally an N-critic panel via <code>--min-critics</code>).</li>
+      </ul>
+      <p><b>Cross-vendor review (optional).</b> If <code>scripts/codex.ts detect</code> finds Codex installed and logged in, the orchestrator routes the review (and optionally first-cut tests) through it — the most independent check, since self-preference bias is strongest within a model family. No Codex? It falls back to the <code>code-reviewer</code> subagent on a different Claude model than the implementer. The <code>Stop</code> hook (<code>scripts/enforce-signoff.ts</code>) blocks the session from ending until the gates clear, with an 8-block safety valve.</p>
+      <h3>⚠ Stop-hook reliability note</h3>
+      <p>Plugin-delivered <code>Stop</code> hooks have historically had a bug where the block halts instead of continuing. If your Claude Code version doesn't continue on the block, copy the hook into your project's <code>.claude/settings.json</code> (this path is reliable):</p>
+      <div class="code-block">{
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command",
+        "command": "npx tsx /abs/path/to/tulpkit/scripts/enforce-signoff.ts" } ] }
+    ]
+  }
+}</div>
+    </div>
+  </section>
+
+  <!-- LAYOUT -->
+  <section class="reveal">
+    <p class="sec-h">Layout</p>
+    <h2>What's in the box</h2>
+    <div class="prose">
+      <div class="code-block">.claude-plugin/plugin.json   manifest
+commands/                    plan · make · add · list · remove · help
+agents/                      researcher · architect · implementer (writes) · tester (owns tests)
+                             · reviewer (≠ author) · ux-designer (on-demand)
+skills/                      orchestrated-delivery · planning · specialist-protocol · tasks
+hooks/hooks.json             the Stop-hook wiring
+scripts/                     orchestrator.ts · enforce-signoff.ts · tasks.ts · codex.ts · selftest.ts
+examples/                    CLAUDE.md · LEARNINGS.md (copy to your repo)
+README.html                  this page  ·  evidence.html  ·  research.html  (the proof)</div>
+      <p>Built entirely from real Claude Code plugin primitives: a manifest, commands, agents, skills, a <code>Stop</code> hook, and small TypeScript scripts (Node built-ins only). <code>npm run typecheck</code> and <code>npm test</code> (<code>selftest.ts</code>) are the verification gates for the plugin's own core.</p>
+    </div>
+  </section>
+
+  <!-- HONEST LIMITATIONS -->
+  <section class="reveal">
+    <p class="sec-h" style="color:var(--warn)">Honest limitations</p>
+    <h2>What's enforced vs. attested</h2>
+    <div class="prose">
+      <ul>
+        <li><b>Mechanically enforced vs. attested.</b> Four things are enforced by <em>code</em> and can't be talked past: a real exit-0 test run, the hash-based test-integrity lock, the <code>manual</code> fence, and the spec-lock hash. The rest — the <code>spec_conformance</code> attestation and the ≥4-item checklist — are <em>auditable</em> (they leave a reviewable trail), not machine-verified: free-text the reviewer asserts, and a reviewer that lies satisfies them. The orchestrator recording the gates is also the model doing the work, so the hard floor is the mechanical checks, not the paperwork.</li>
+        <li>The gate proves the test command exits 0, not that the tests are <em>strong</em>; under <code>adapt</code> a thin suite is a weak signal. The tester writing real failure/edge cases and the reviewer's coverage check backstop that.</li>
+        <li>The reviewer is an LLM judge (self-preference/position bias), so it runs on a different model than the implementer by default, and on <b>Codex (a different vendor) when available</b> — the strongest mitigation. For high-stakes work, require an N-critic panel and/or human sign-off too.</li>
+        <li>Test integrity is hash-based: it catches edits to <em>locked</em> tests, so the tester must lock the real suite. It can't judge whether unlocked or pre-existing tests are strong — the reviewer's spec-conformance check backstops that.</li>
+        <li><code>${CLAUDE_PLUGIN_ROOT}</code> reliably expands in <b>hooks</b> (used by the Stop hook), but its expansion inside <b>slash-command bodies</b> has been flaky in some Claude Code versions. Commands fall back to locating the script; subagents never call the scripts directly (the orchestrator owns the state machine).</li>
+        <li>Symlinks assume a POSIX filesystem; on Windows, enable developer mode or run under WSL.</li>
+        <li>Multi-agent fan-out helps parallel, read-heavy work; it's overkill for small/coupled tasks. Default to fewer agents — that's what the <code>quick</code> tier of <code>/make</code> is for (the 3 gate-critical roles, same gates, no research/architecture ceremony).</li>
+      </ul>
+    </div>
   </section>
 
   <!-- LINKS -->
