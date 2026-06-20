@@ -447,7 +447,10 @@ function testStructure(): void {
   check("marketplace source points at the nested plugin", entry?.source === "./plugins/tulpkit");
 
   const hooks = readJson("hooks/hooks.json");
-  const cmd = hooks?.Stop?.[0]?.hooks?.[0]?.command || "";
+  // the plugin loader requires a top-level `hooks` record (events nest under it)
+  check("hooks.json wraps events under a top-level `hooks` record",
+    !!hooks?.hooks && typeof hooks.hooks === "object" && hooks.Stop === undefined);
+  const cmd = hooks?.hooks?.Stop?.[0]?.hooks?.[0]?.command || "";
   check("Stop hook points at enforce-signoff.ts", /enforce-signoff\.ts/.test(cmd) && fs.existsSync(HOOK));
 
   // every agent/command/skill has the frontmatter the loader needs
