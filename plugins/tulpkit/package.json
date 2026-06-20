@@ -1,6 +1,6 @@
 {
   "name": "tulpkit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Claude Code plugin: staged multi-agent delivery enforced to a validation-gated, auditable sign-off, plus a git-backed folder task system.",
   "type": "module",
