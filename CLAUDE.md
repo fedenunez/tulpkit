@@ -5,14 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 `tulpkit` is a **Claude Code plugin** (not an application). There is no build/runtime — the
-deliverable is the set of plugin primitives at the repo root: a manifest, slash commands, subagent
-definitions, skills, a `Stop` hook, and four TypeScript scripts run via `npx tsx`. Editing this
-repo means editing those primitives. The plugin ships two capabilities: **orchestrated delivery**
-(`/tulpkit:make`) and a **git-backed folder task system** (`/add`, `/list`, `/remove`, `/make`).
+deliverable is the set of plugin primitives under `plugins/tulpkit/`: a manifest, slash commands,
+subagent definitions, skills, a `Stop` hook, and four TypeScript scripts run via `npx tsx`. Editing
+this repo means editing those primitives. The repo root is a thin **marketplace wrapper**
+(`.claude-plugin/marketplace.json` + `README.md` + `docs/`). The plugin ships two capabilities:
+**orchestrated delivery** (`/tulpkit:make`) and a **git-backed folder task system** (`/add`,
+`/list`, `/remove`, `/make`).
 
-> Distinguish two audiences: `examples/CLAUDE.md` and `examples/LEARNINGS.md` are templates **for
-> downstream repos that install the plugin** — they are not this repo's own config. This file
-> (root `CLAUDE.md`) is for working **on the plugin**.
+> Distinguish two audiences: `plugins/tulpkit/examples/CLAUDE.md` and
+> `plugins/tulpkit/examples/LEARNINGS.md` are templates **for downstream repos that install the
+> plugin** — they are not this repo's own config. This file (root `CLAUDE.md`) is for working
+> **on the plugin**.
+
+> All `npm`/`npx tsx` commands below run **from `plugins/tulpkit/`** (where `package.json` lives).
 
 ## Commands
 
@@ -109,7 +114,7 @@ auto-increment per root. Symlinks assume a POSIX filesystem.
   guards against the `"true"` sentinel (a flag with no value). Keep this style; don't add runtime deps.
 - **All scripts** install an `EPIPE` guard on stdout and use `spawnSync` for shelling out. Match
   these patterns when adding subcommands.
-- The HTML files (`README.html`, `evidence.html`, `research.html`) are the public, evidence-backed
+- The HTML files (`docs/README.html`, `docs/evidence.html`, `docs/research.html`) are the public, evidence-backed
   rationale for design decisions — consult them before changing a gate or the role/model policy, and
   keep them in sync when the methodology changes.
 - Per global instruction: **never use sleeps/delays to synchronize** — the design already uses the

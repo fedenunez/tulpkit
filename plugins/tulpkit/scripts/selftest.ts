@@ -16,6 +16,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// The plugin lives at plugins/tulpkit/; the marketplace wrapper + CLAUDE.md live two levels up.
+const ROOT = path.resolve(REPO, "..", "..");
 const TSX = path.join(REPO, "node_modules", ".bin", "tsx");
 const ORCH = path.join(REPO, "scripts", "orchestrator.ts");
 const TASKS = path.join(REPO, "scripts", "tasks.ts");
@@ -439,9 +441,10 @@ function testStructure(): void {
   const plugin = readJson(".claude-plugin/plugin.json");
   check("plugin.json names the plugin 'tulpkit'", plugin.name === "tulpkit");
 
-  const market = readJson(".claude-plugin/marketplace.json");
+  const market = JSON.parse(fs.readFileSync(path.join(ROOT, ".claude-plugin", "marketplace.json"), "utf8"));
   const entry = (market.plugins || []).find((p: any) => p.name === "tulpkit");
   check("marketplace lists the tulpkit plugin", !!entry);
+  check("marketplace source points at the nested plugin", entry?.source === "./plugins/tulpkit");
 
   const hooks = readJson("hooks/hooks.json");
   const cmd = hooks?.Stop?.[0]?.hooks?.[0]?.command || "";
@@ -476,8 +479,9 @@ function testStructure(): void {
   check("implementer.md does not tell the implementer to extend tests (finding 4)",
     !/extend tests\b/i.test(implTxt) && /ask the tester to write them/i.test(implTxt));
   // finding 5: CLAUDE.md documents the executable test gate
+  const containsRoot = (rel: string, re: RegExp) => re.test(fs.readFileSync(path.join(ROOT, rel), "utf8"));
   check("CLAUDE.md documents `npm test` as a verification gate (finding 5)",
-    contains("CLAUDE.md", /npm test/) && !contains("CLAUDE.md", /no test suite for the plugin/i));
+    containsRoot("CLAUDE.md", /npm test/) && !containsRoot("CLAUDE.md", /no test suite for the plugin/i));
 }
 
 // ---- locks are confined to the repo root (codex cross-vendor review) -------

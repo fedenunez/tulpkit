@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "tulpkit",
-      "source": "./",
-      "description": "Research-backed staged orchestration (/tulpkit:make) + git-backed tasks. Decision evidence in evidence.html; full analysis in research.html.",
+      "source": "./plugins/tulpkit",
+      "description": "Research-backed staged orchestration (/tulpkit:make) + git-backed tasks. Decision evidence and full analysis in docs/.",
       "version": "1.1.0"
     }
   ]
